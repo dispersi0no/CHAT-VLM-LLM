@@ -6,23 +6,27 @@
 
 ### Поддерживаемые модели
 
-- **GOT-OCR 2.0** - Специализированный OCR для сложных макетов
-- **Qwen2-VL** (2B, 7B) - Продвинутое vision-language понимание
-- **Qwen3-VL** (2B, 4B, 8B) - Новейшая VLM с OCR на 32 языках, визуальным агентом, контекстом 256K
+#### Рабочие модели
+
+- **Qwen3-VL 2B** - Основная рабочая модель, OCR на 32 языках, визуальный агент, контекст 256K
 - **dots.ocr** - SOTA мультиязычный парсер документов (100+ языков)
-- **DeepSeek OCR** - Интеграция DeepSeek для OCR задач
-- **Phi-3 Vision** - Microsoft Phi-3 для визуальных задач
+- **Qwen3 Emergency Mode** - Аварийный режим загрузки Qwen3-VL
+
+#### Экспериментальные (не работают)
+
+- ~~Phi-3 Vision~~ - Microsoft, присутствует в transformers, но не функционирует
+- ~~DeepSeek OCR~~ - Интеграция не завершена
+- ~~GOT-OCR 2.0~~ - Требует доработки
+- ~~Qwen2-VL~~ - Устаревшая версия
 
 ### Ключевые возможности
 
 - **Мультиязычный OCR** - 32+ языка с высокой точностью
 - **Визуальный агент** - Взаимодействие с GUI и автоматизация (Qwen3-VL)
 - **Анализ документов** - Определение макета, извлечение таблиц, парсинг структуры
-- **Визуальное рассуждение** - Сложные рассуждения об изображениях и диаграммах
 - **Понимание видео** - Контекст 256K для длинных видео
 - **Гибкая квантизация** - Поддержка FP16, INT8, INT4
 - **Flash Attention 2** - Быстрый инференс с меньшим потреблением памяти
-- **REST API** - Production-ready FastAPI эндпоинты
 - **Docker** - Контейнеризация с поддержкой GPU
 - **Blackwell GPU** - Оптимизация для NVIDIA Blackwell архитектуры
 
@@ -54,34 +58,37 @@ docker-compose up -d
 
 ## Требования к GPU
 
-| GPU | VRAM | Лучшая модель | Статус |
-|-----|------|---------------|--------|
-| RTX 5090 | 32GB | Qwen3-VL 8B@FP16 | Идеально |
-| RTX 5080 | 16GB | Qwen3-VL 8B@INT8 | Отлично |
-| RTX 5070 | 12GB | Qwen3-VL 4B@FP16 | Хорошо |
-| RTX 4090 | 24GB | Qwen3-VL 8B@FP16 | Отлично |
-| RTX 4080 | 16GB | Qwen3-VL 8B@INT8 | Хорошо |
+| GPU | VRAM | Рекомендуемая модель | Статус |
+|-----|------|---------------------|--------|
+| RTX 5090 | 32GB | Qwen3-VL 2B@FP16 | Идеально |
+| RTX 5080 | 16GB | Qwen3-VL 2B@FP16 | Отлично |
+| RTX 5070 | 12GB | Qwen3-VL 2B@FP16 | Хорошо |
+| RTX 4090 | 24GB | Qwen3-VL 2B@FP16 | Отлично |
+| RTX 4080 | 16GB | Qwen3-VL 2B@INT8 | Хорошо |
 
 ## Структура проекта
 
 ```
 CHAT-VLM-LLM/
 ├── models/
-│   ├── base_model.py           # Базовый класс моделей
-│   ├── model_loader.py         # Фабрика загрузки моделей
-│   ├── got_ocr.py              # GOT-OCR 2.0
-│   ├── qwen_vl.py              # Qwen2-VL
-│   ├── qwen3_vl.py             # Qwen3-VL
-│   ├── dots_ocr.py             # dots.ocr
-│   ├── deepseek_ocr.py         # DeepSeek OCR
-│   └── phi3_vision.py          # Phi-3 Vision
-├── .github/                    # GitHub workflows
-├── Dockerfile                  # Docker образ
-├── Dockerfile.light            # Облегчённый образ
-├── .env.example                # Пример конфигурации
-├── CHANGELOG.md                # История изменений
-├── CONTRIBUTING.md             # Руководство контрибьютора
-└── LICENSE                     # MIT лицензия
+│   ├── base_model.py                   # Базовый класс моделей
+│   ├── model_loader.py                 # Фабрика загрузки моделей
+│   ├── model_loader_emergency.py       # Аварийный загрузчик Qwen3
+│   ├── qwen3_vl.py                     # Qwen3-VL (рабочая)
+│   ├── dots_ocr.py                     # dots.ocr (рабочая)
+│   ├── dots_ocr_final.py               # dots.ocr финальная версия
+│   ├── dots_ocr_vllm_integration.py    # Интеграция с vLLM
+│   ├── got_ocr.py                      # GOT-OCR (не работает)
+│   ├── qwen_vl.py                      # Qwen2-VL (устаревшая)
+│   ├── deepseek_ocr.py                 # DeepSeek (не работает)
+│   └── phi3_vision.py                  # Phi-3 (не работает)
+├── .github/                            # GitHub workflows
+├── Dockerfile                          # Docker образ
+├── Dockerfile.light                    # Облегчённый образ
+├── .env.example                        # Пример конфигурации
+├── CHANGELOG.md                        # История изменений
+├── CONTRIBUTING.md                     # Руководство контрибьютора
+└── LICENSE                             # MIT лицензия
 ```
 
 ## Конфигурация
@@ -103,9 +110,8 @@ MIT License - см. [LICENSE](LICENSE)
 ## Ссылки
 
 - **Qwen3-VL**: https://github.com/QwenLM/Qwen3-VL
-- **GOT-OCR**: https://github.com/Ucas-HaoranWei/GOT-OCR2.0
 - **dots.ocr**: https://github.com/rednote-hilab/dots.ocr
 
 ---
 
-**Production Ready** | **6+ моделей** | **REST API** | **Docker**
+**Рабочие модели: Qwen3-VL 2B, dots.ocr** | **Docker**
