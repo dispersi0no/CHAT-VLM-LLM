@@ -57,15 +57,14 @@
 
 | Модель | Описание | Статус |
 |--------|----------|--------|
-| **Qwen3-VL 2B** | OCR на 32 языках, визуальный агент, контекст 256K | 🟢 Основная |
+| **Qwen3-VL 2B** | OCR на 32 языках, визуальный агент, контекст 256K (включая Emergency Mode) | 🟢 Основная |
 | **dots.ocr** | SOTA парсер документов, 100+ языков | 🟢 Работает |
-| **Qwen3 Emergency** | Аварийный режим загрузки | 🟢 Работает |
 
-### ⚠️ Экспериментальные
+### ⚠️ Экспериментальные (не работают)
 
 | Модель | Проблема | Статус |
 |--------|----------|--------|
-| Phi-3 Vision | Есть в transformers, не функционирует | 🔴 Не работает |
+| Phi-3 Vision | Microsoft, есть только в vLLM, не функционирует | 🔴 Не работает |
 | DeepSeek OCR | Интеграция не завершена | 🔴 Не работает |
 | GOT-OCR 2.0 | Требует доработки | 🔴 Не работает |
 | Qwen2-VL | Нестабильная, не доработана | 🟡 Нестабильна |
@@ -127,15 +126,15 @@ docker-compose up -d
 📂 CHAT-VLM-LLM/
 ├── 📂 models/
 │   ├── 🟢 qwen3_vl.py                 # Qwen3-VL (рабочая)
+│   ├── 🟢 model_loader_emergency.py   # Qwen3-VL Emergency Mode
 │   ├── 🟢 dots_ocr.py                 # dots.ocr (рабочая)
 │   ├── 🟢 dots_ocr_final.py           # dots.ocr final
-│   ├── 🟢 model_loader_emergency.py   # Emergency Mode
 │   ├── ⬜ base_model.py               # Базовый класс
 │   ├── ⬜ model_loader.py             # Загрузчик
 │   ├── 🟡 qwen_vl.py                  # Qwen2-VL (нестабильна)
 │   ├── 🔴 got_ocr.py                  # GOT-OCR (не работает)
 │   ├── 🔴 deepseek_ocr.py             # DeepSeek (не работает)
-│   └── 🔴 phi3_vision.py              # Phi-3 (не работает)
+│   └── 🔴 phi3_vision.py              # Phi-3 (только vLLM, не работает)
 ├── 📂 .github/                     # GitHub workflows
 ├── 🐳 Dockerfile                   # Docker образ
 ├── 💨 Dockerfile.light             # Light версия
