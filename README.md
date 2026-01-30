@@ -17,7 +17,7 @@
 - ~~Phi-3 Vision~~ - Microsoft, присутствует в transformers, но не функционирует
 - ~~DeepSeek OCR~~ - Интеграция не завершена
 - ~~GOT-OCR 2.0~~ - Требует доработки
-- ~~Qwen2-VL~~ - Устаревшая версия
+- ~~Qwen2-VL~~ - Нестабильная, не доработана
 
 ### Ключевые возможности
 
@@ -79,7 +79,7 @@ CHAT-VLM-LLM/
 │   ├── dots_ocr_final.py               # dots.ocr финальная версия
 │   ├── dots_ocr_vllm_integration.py    # Интеграция с vLLM
 │   ├── got_ocr.py                      # GOT-OCR (не работает)
-│   ├── qwen_vl.py                      # Qwen2-VL (устаревшая)
+│   ├── qwen_vl.py                      # Qwen2-VL (нестабильная, не доработана)
 │   ├── deepseek_ocr.py                 # DeepSeek (не работает)
 │   └── phi3_vision.py                  # Phi-3 (не работает)
 ├── .github/                            # GitHub workflows
