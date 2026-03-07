@@ -9,6 +9,9 @@ import importlib
 import html
 import time
 
+# КРИТИЧЕСКИ ВАЖНО: Отключение symlinks для Windows
+import disable_symlinks_startup
+
 
 
 # Принудительная перезагрузка модулей HTML рендеринга при каждом запуске

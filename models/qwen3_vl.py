@@ -42,12 +42,21 @@ class Qwen3VLModel(BaseModel):
             device = self._get_device()
             logger.info(f"Using device: {device}")
             
+            # WINDOWS SYMLINKS FIX: Используем local_files_only=True для обхода symlinks
+            processor_kwargs = {
+                'min_pixels': self.min_pixels * 28 * 28,
+                'max_pixels': self.max_pixels * 28 * 28,
+                'trust_remote_code': True,
+                'local_files_only': True,  # Используем только локальный кеш
+            }
+            
             # Load processor
+            logger.info("Loading processor...")
             self.processor = AutoProcessor.from_pretrained(
                 self.model_path,
-                min_pixels=self.min_pixels * 28 * 28,
-                max_pixels=self.max_pixels * 28 * 28
+                **processor_kwargs
             )
+            logger.info("✅ Processor loaded successfully")
             
             # Build loading kwargs using base class method
             load_kwargs = self._get_load_kwargs()
@@ -63,8 +72,13 @@ class Qwen3VLModel(BaseModel):
             if 'use_flash_attention' in load_kwargs:
                 del load_kwargs['use_flash_attention']
             
+            # WINDOWS SYMLINKS FIX: Добавляем local_files_only
+            load_kwargs['local_files_only'] = True
+            load_kwargs['trust_remote_code'] = True
+            
             # Load model with compatibility fixes
             logger.info("Loading model weights...")
+            logger.info(f"Load kwargs: {load_kwargs}")
             try:
                 self.model = Qwen3VLForConditionalGeneration.from_pretrained(
                     self.model_path,
