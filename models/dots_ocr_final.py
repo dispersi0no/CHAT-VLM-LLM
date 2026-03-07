@@ -431,30 +431,6 @@ class DotsOCRFinalModel(BaseModel):
     def get_structured_result(self, image: Image.Image) -> Dict[str, Any]:
         """Получить структурированный результат с XML-обработкой"""
         return self.process_image(image, mode="structured_simple", process_xml=True)
-        """Экспортирует табличные данные в файл."""
-        try:
-            result = self.extract_table(image)
-            
-            if isinstance(result, dict) and self.xml_processor:
-                # Экспорт в Excel
-                if output_file.endswith('.xlsx'):
-                    return self.xml_processor.export_tables_to_excel(result, output_file)
-                # Экспорт в JSON
-                elif output_file.endswith('.json'):
-                    return self.xml_processor.export_to_json(result, output_file)
-            
-            # Простой текстовый экспорт
-            with open(output_file, 'w', encoding='utf-8') as f:
-                if isinstance(result, dict):
-                    f.write(str(result))
-                else:
-                    f.write(result)
-            
-            return True
-            
-        except Exception as e:
-            logger.error(f"Export error: {e}")
-            return False
     
     def unload(self) -> None:
         """Выгружаем модель."""
