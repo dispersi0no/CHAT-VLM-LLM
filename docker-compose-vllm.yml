@@ -3,7 +3,7 @@ version: '3.8'
 services:
   # DotsOCR - основная OCR модель (протестирована и работает)
   dots-ocr:
-    image: vllm/vllm-openai:v0.6.6
+    image: vllm/vllm-openai:v0.16.0
     container_name: dots-ocr-fixed
     restart: "no"  # ИСПРАВЛЕНО: Отключен автоперезапуск для соблюдения принципа одного контейнера
     ports:
@@ -51,7 +51,7 @@ services:
 
   # Qwen2-VL 2B - легкая VLM модель (совместима с vLLM)
   qwen2-vl-2b:
-    image: vllm/vllm-openai:v0.6.6
+    image: vllm/vllm-openai:v0.16.0
     container_name: qwen-qwen2-vl-2b-instruct-vllm
     restart: "no"  # ИСПРАВЛЕНО: Отключен автоперезапуск для соблюдения принципа одного контейнера
     ports:
@@ -96,7 +96,7 @@ services:
 
   # Qwen3-VL 2B - улучшенная VLM модель (рекомендуется)
   qwen3-vl-2b:
-    image: vllm/vllm-openai:v0.6.6
+    image: vllm/vllm-openai:v0.16.0
     container_name: qwen-qwen3-vl-2b-instruct-vllm
     restart: "no"  # ИСПРАВЛЕНО: Отключен автоперезапуск для соблюдения принципа одного контейнера
     ports:
@@ -141,7 +141,7 @@ services:
 
   # Phi-3.5 Vision - продвинутая VLM модель (требует больше памяти)
   phi35-vision:
-    image: vllm/vllm-openai:v0.6.6
+    image: vllm/vllm-openai:v0.16.0
     container_name: microsoft-phi-3-5-vision-instruct-vllm
     restart: "no"  # ИСПРАВЛЕНО: Отключен автоперезапуск для соблюдения принципа одного контейнера
     ports:
@@ -188,7 +188,7 @@ services:
 
   # Qwen2-VL 7B - большая VLM модель (только для мощных GPU)
   qwen2-vl-7b:
-    image: vllm/vllm-openai:v0.6.6
+    image: vllm/vllm-openai:v0.16.0
     container_name: qwen-qwen2-vl-7b-instruct-vllm
     restart: "no"  # ИСПРАВЛЕНО: Отключен автоперезапуск для соблюдения принципа одного контейнера
     ports:
