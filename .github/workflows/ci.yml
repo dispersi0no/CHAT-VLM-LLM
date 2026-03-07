@@ -43,11 +43,11 @@ jobs:
     
     - name: Check formatting with black
       run: |
-        black --check --diff . || true
+        black --check --diff . || echo "::warning::Black formatting issues found (non-blocking)"
     
     - name: Check imports with isort
       run: |
-        isort --check-only --diff . || true
+        isort --check-only --diff . || echo "::warning::isort import ordering issues found (non-blocking)"
     
     - name: Run tests
       run: |

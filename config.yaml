@@ -6,9 +6,9 @@ emergency_mode:
   - tf32_optimization
   - cudnn_benchmark
   - sdpa_attention
-  enabled: true
-  reason: Critical CUDA errors detected in logs
-  timestamp: '2026-01-24T22:53:33.044348'
+  enabled: false
+  reason: ''
+  timestamp: ''
 
 # Transformers режим - стабильные модели
 transformers:
@@ -118,10 +118,10 @@ document_templates:
 
 performance:
   blackwell_optimizations:
-    enable_cudnn_benchmark: false
-    enable_sdpa: false
-    enable_tf32: false
-    force_eager_attention: true
+    enable_cudnn_benchmark: true
+    enable_sdpa: true
+    enable_tf32: true
+    force_eager_attention: false
     use_bfloat16: false
   generation_settings:
     default_max_tokens: 1024

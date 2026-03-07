@@ -9,14 +9,14 @@ API_URL = "http://localhost:8000"
 
 def health_check():
     """Check API health and GPU status."""
-    response = requests.get(f"{API_URL}/health")
+    response = requests.get(f"{API_URL}/health", timeout=30)
     print("Health Check:")
     print(json.dumps(response.json(), indent=2))
     return response.json()
 
 def list_models():
     """List available models."""
-    response = requests.get(f"{API_URL}/models")
+    response = requests.get(f"{API_URL}/models", timeout=30)
     print("\nAvailable Models:")
     print(json.dumps(response.json(), indent=2))
     return response.json()
@@ -31,7 +31,8 @@ def extract_text(image_path, model="qwen3_vl_2b", language=None):
         response = requests.post(
             f"{API_URL}/ocr",
             files={'file': f},
-            params=params
+            params=params,
+            timeout=30
         )
         
         if response.status_code == 200:
@@ -56,7 +57,8 @@ def chat_with_image(image_path, prompt, model="qwen3_vl_2b", temperature=0.7):
                 'model': model,
                 'temperature': temperature,
                 'max_tokens': 512
-            }
+            },
+            timeout=30
         )
         
         if response.status_code == 200:
@@ -72,17 +74,18 @@ def chat_with_image(image_path, prompt, model="qwen3_vl_2b", temperature=0.7):
 
 def batch_ocr(image_paths, model="qwen3_vl_2b"):
     """Process multiple images in batch."""
-    files = [('files', open(path, 'rb')) for path in image_paths]
-    
-    response = requests.post(
-        f"{API_URL}/batch/ocr",
-        files=files,
-        params={'model': model}
-    )
-    
-    # Close files
-    for _, f in files:
-        f.close()
+    file_handles = [open(path, 'rb') for path in image_paths]
+    try:
+        files = [('files', fh) for fh in file_handles]
+        response = requests.post(
+            f"{API_URL}/batch/ocr",
+            files=files,
+            params={'model': model},
+            timeout=30
+        )
+    finally:
+        for fh in file_handles:
+            fh.close()
     
     if response.status_code == 200:
         result = response.json()
@@ -124,7 +127,7 @@ def compare_models(image_path, models=["qwen3_vl_2b", "qwen3_vl_4b"]):
 
 def unload_model(model_name):
     """Unload model from memory."""
-    response = requests.delete(f"{API_URL}/models/{model_name}")
+    response = requests.delete(f"{API_URL}/models/{model_name}", timeout=30)
     if response.status_code == 200:
         print(f"\nModel {model_name} unloaded successfully")
         return True

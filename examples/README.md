@@ -46,7 +46,7 @@ For testing, you can:
 from PIL import Image
 from models import ModelLoader
 
-model = ModelLoader.load_model("got_ocr")
+model = ModelLoader.load_model("qwen3_vl_2b")
 image = Image.open("examples/passports/sample_passport.jpg")
 result = model.process_image(image)
 print(result)
@@ -58,7 +58,7 @@ from PIL import Image
 from models import ModelLoader
 from utils.field_parser import FieldParser
 
-model = ModelLoader.load_model("qwen_vl_2b")
+model = ModelLoader.load_model("qwen3_vl_2b")
 image = Image.open("examples/invoices/sample_invoice.jpg")
 text = model.process_image(image)
 fields = FieldParser.parse_invoice(text)
@@ -71,9 +71,9 @@ Results from processing example documents will be documented here.
 
 | Document Type | Model | Accuracy | Speed |
 |---------------|-------|----------|-------|
-| Passport | GOT-OCR | TBD | TBD |
-| Invoice | Qwen2-VL-2B | TBD | TBD |
-| Receipt | GOT-OCR | TBD | TBD |
+| Passport | Qwen3-VL-2B | TBD | TBD |
+| Invoice | Qwen3-VL-2B | TBD | TBD |
+| Receipt | Qwen3-VL-2B | TBD | TBD |
 
 ## Contributing Examples
 

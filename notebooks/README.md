@@ -155,7 +155,7 @@ Share your notebooks!
 from PIL import Image
 from models import ModelLoader
 
-model = ModelLoader.load_model('got_ocr')
+model = ModelLoader.load_model('dots_ocr')
 image = Image.open('document.jpg')
 text = model.process_image(image)
 print(text)
@@ -164,7 +164,7 @@ print(text)
 ### Interactive Chat
 
 ```python
-model = ModelLoader.load_model('qwen_vl_2b')
+model = ModelLoader.load_model('qwen3_vl_2b')
 response = model.chat(image, "What's in this document?")
 print(response)
 ```

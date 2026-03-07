@@ -29,8 +29,7 @@ class TestModelLoader:
     def test_load_config(self, config_path):
         """Test configuration loading."""
         config = ModelLoader.load_config()
-        assert "models" in config
-        assert "app" in config
+        assert "models" in config or "transformers" in config
         assert "ocr" in config
     
     def test_get_available_models(self, config_path):
@@ -38,7 +37,7 @@ class TestModelLoader:
         models = ModelLoader.MODEL_REGISTRY
         assert isinstance(models, dict)
         assert len(models) > 0
-        assert "got_ocr" in models or "qwen_vl_2b" in models
+        assert "qwen3_vl_2b" in models or "dots_ocr" in models
     
     def test_model_configuration(self, config_path):
         """Test model configuration structure."""

@@ -8,6 +8,10 @@ import sys
 import importlib
 import html
 import time
+import logging
+import traceback
+
+logger = logging.getLogger(__name__)
 
 
 
@@ -20,7 +24,6 @@ if 'utils.smart_content_renderer' in sys.modules:
 
 
 import json
-import re
 
 def render_message_with_json_and_html_tables(content: str, role: str = "assistant"):
     """
@@ -275,8 +278,6 @@ def clean_ocr_result(text: str) -> str:
     # Исправление конкретных искажений
     corrections = {
         'BOJNTEJBCKOEVJOCTOBEPENNE': 'ВОДИТЕЛЬСКОЕ УДОСТОВЕРЕНИЕ',
-        'BAKAPNHLEB': 'ВАКАРИН ЛЕВ',
-        'AHAPENNABNOBNY': 'АНДРЕЙ ЛЬВОВИЧ',
         'ANTANCKNIKPA': 'АЛТАЙСКИЙ КРАЙ',
         'TN6A2747': 'ГИ БДД 2747'
     }
@@ -535,22 +536,8 @@ def display_bbox_visualization_improved(ocr_result):
                     st.caption(f"Текст: {display_text}")
     
     except Exception as e:
-        st.error(f"❌ Ошибка визуализации BBOX: {e}")
-        
-        # Отладочная информация
-        with st.expander("🔧 Отладочная информация"):
-            import traceback
-            st.code(traceback.format_exc())
-            
-            if 'image' in locals():
-                st.write(f"**Тип изображения:** {type(image)}")
-                if hasattr(image, 'size'):
-                    st.write(f"**Размер изображения:** {image.size}")
-            
-            if 'response_text' in locals():
-                st.write(f"**Длина ответа:** {len(response_text)}")
-                st.write(f"**Первые 200 символов:**")
-                st.code(response_text[:200])
+        logger.error(f"Error: {traceback.format_exc()}")
+        st.error("Произошла ошибка при обработке. Проверьте логи для деталей.")
 
 
 
@@ -1910,7 +1897,6 @@ Output as JSON array of detected layout elements.""",
                                             # Аналитический вопрос - адаптируем ответ
                                             if 'число' in prompt.lower() or 'number' in prompt.lower():
                                                 # Ищем числа в тексте
-                                                import re
                                                 numbers = re.findall(r'\d+', ocr_text)
                                                 if numbers:
                                                     response = f"В изображении найдены числа: {', '.join(numbers)}"
@@ -2148,7 +2134,6 @@ Output as JSON array of detected layout elements.""",
                                             # Аналитический вопрос - адаптируем ответ
                                             if 'число' in prompt.lower() or 'number' in prompt.lower():
                                                 # Ищем числа в тексте
-                                                import re
                                                 numbers = re.findall(r'\d+', ocr_text)
                                                 if numbers:
                                                     response = f"В изображении найдены числа: {', '.join(numbers)}"
@@ -2340,7 +2325,7 @@ else:  # Документация
         
         ```bash
         # Клонировать репозиторий
-        git clone https://github.com/OlegKarenkikh/chatvlmllm.git
+        git clone https://github.com/dispersi0no/CHAT-VLM-LLM.git
         cd chatvlmllm
         
         # Настройка (автоматизированная)
@@ -2367,7 +2352,7 @@ else:  # Документация
         - **dots.ocr**: Специализированный парсер документов
         """)
         
-        st.info("📖 Для подробных инструкций см. [QUICKSTART.md](https://github.com/OlegKarenkikh/chatvlmllm/blob/main/QUICKSTART.md)")
+        st.info("📖 Для подробных инструкций см. [QUICKSTART.md](https://github.com/dispersi0no/CHAT-VLM-LLM/blob/main/QUICKSTART.md)")
     
     with doc_tabs[1]:
         st.markdown("""
@@ -2424,7 +2409,7 @@ else:  # Документация
         - ✅ JSON вывод
         """)
         
-        st.info("📖 Для подробной документации см. [docs/models.md](https://github.com/OlegKarenkikh/chatvlmllm/blob/main/docs/models.md)")
+        st.info("📖 Для подробной документации см. [docs/models.md](https://github.com/dispersi0no/CHAT-VLM-LLM/blob/main/docs/models.md)")
     
     with doc_tabs[2]:
         st.markdown("""
@@ -2452,7 +2437,7 @@ else:  # Документация
         - **Тесты**: Обеспечение качества
         """)
         
-        st.info("📖 Для деталей архитектуры см. [docs/architecture.md](https://github.com/OlegKarenkikh/chatvlmllm/blob/main/docs/architecture.md)")
+        st.info("📖 Для деталей архитектуры см. [docs/architecture.md](https://github.com/dispersi0no/CHAT-VLM-LLM/blob/main/docs/architecture.md)")
     
     with doc_tabs[3]:
         st.markdown("""
@@ -2515,7 +2500,7 @@ else:  # Документация
         - 🎨 Улучшения UI
         """)
         
-        st.info("📖 Для руководящих принципов участия см. [CONTRIBUTING.md](https://github.com/OlegKarenkikh/chatvlmllm/blob/main/CONTRIBUTING.md)")
+        st.info("📖 Для руководящих принципов участия см. [CONTRIBUTING.md](https://github.com/dispersi0no/CHAT-VLM-LLM/blob/main/CONTRIBUTING.md)")
 
 # Footer
 st.divider()
@@ -2523,7 +2508,7 @@ st.markdown("""
 <div style="text-align: center; color: #888; padding: 2rem;">
     <p><strong>ChatVLMLLM</strong> - Образовательный исследовательский проект</p>
     <p>Создано с ❤️ используя Streamlit | 
-    <a href="https://github.com/OlegKarenkikh/chatvlmllm" target="_blank" style="color: #FF4B4B;">GitHub</a> | 
+    <a href="https://github.com/dispersi0no/CHAT-VLM-LLM" target="_blank" style="color: #FF4B4B;">GitHub</a> | 
     Лицензия MIT</p>
     <p style="font-size: 0.9rem; margin-top: 1rem;">🔬 Исследование моделей машинного зрения для OCR документов</p>
 </div>

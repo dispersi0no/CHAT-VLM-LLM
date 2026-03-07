@@ -125,23 +125,26 @@ docker-compose up -d
 ```
 📂 CHAT-VLM-LLM/
 ├── 📂 models/
-│   ├── 🟢 qwen3_vl.py                 # Qwen3-VL (рабочая)
-│   ├── 🟢 model_loader_emergency.py   # Qwen3-VL Emergency Mode
-│   ├── 🟢 dots_ocr.py                 # dots.ocr (рабочая)
-│   ├── 🟢 dots_ocr_final.py           # dots.ocr final
-│   ├── ⬜ base_model.py               # Базовый класс
-│   ├── ⬜ model_loader.py             # Загрузчик
-│   ├── 🟡 qwen_vl.py                  # Qwen2-VL (нестабильна)
-│   ├── 🔴 got_ocr.py                  # GOT-OCR (не работает)
-│   ├── 🔴 deepseek_ocr.py             # DeepSeek (не работает)
-│   └── 🔴 phi3_vision.py              # Phi-3 (только vLLM, не работает)
-├── 📂 .github/                     # GitHub workflows
-├── 🐳 Dockerfile                   # Docker образ
-├── 💨 Dockerfile.light             # Light версия
-├── ⚙️ .env.example                  # Пример конфига
-├── 📝 CHANGELOG.md                  # История изменений
-├── 🤝 CONTRIBUTING.md               # Contribution guide
-└── 📄 LICENSE                       # MIT
+│   ├── 🟢 qwen3_vl.py            # Qwen3-VL (рабочая)
+│   ├── 🟢 dots_ocr.py            # dots.ocr (рабочая)
+│   ├── 🟢 dots_ocr_final.py      # dots.ocr final
+│   ├── ⬜ base_model.py          # Базовый класс
+│   ├── ⬜ model_loader.py        # Загрузчик моделей
+│   ├── 🟡 qwen_vl.py             # Qwen2-VL (нестабильна)
+│   ├── 🔴 got_ocr.py             # GOT-OCR (не работает)
+│   ├── 🔴 deepseek_ocr.py        # DeepSeek (не работает)
+│   └── 🔴 phi3_vision.py         # Phi-3 (не работает)
+├── 📂 utils/                      # Утилиты обработки
+├── 📂 ui/                         # UI компоненты
+├── 📂 tests/                      # Тесты
+├── 📂 docs/                       # Документация
+├── 📂 .github/                    # CI/CD workflows
+├── 🐳 Dockerfile                  # Docker образ
+├── 💨 Dockerfile.light            # Light версия
+├── ⚙️ config.yaml                 # Конфигурация
+├── 🚀 app.py                      # Streamlit приложение
+├── 🔌 api.py                      # FastAPI REST API
+└── 📄 LICENSE                     # MIT
 ```
 
 ---

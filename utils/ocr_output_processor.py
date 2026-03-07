@@ -252,6 +252,8 @@ class OCROutputProcessor:
                               processed_data: Dict[str, Any], 
                               filename: str) -> bool:
         """Экспортирует таблицы в Excel файл"""
+        import os
+        filename = os.path.basename(filename)  # Prevent path traversal
         try:
             if 'tables' not in processed_data.get('processed_data', {}):
                 return False
@@ -271,6 +273,8 @@ class OCROutputProcessor:
                       processed_data: Dict[str, Any], 
                       filename: str) -> bool:
         """Экспортирует данные в JSON файл"""
+        import os
+        filename = os.path.basename(filename)  # Prevent path traversal
         try:
             with open(filename, 'w', encoding='utf-8') as f:
                 json.dump(processed_data, f, ensure_ascii=False, indent=2)

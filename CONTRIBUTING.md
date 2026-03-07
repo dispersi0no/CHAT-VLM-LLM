@@ -6,7 +6,7 @@
 
 ### Сообщения об ошибках
 
-1. Проверьте, не создан ли уже [issue](https://github.com/OlegKarenkikh/chatvlmllm/issues)
+1. Проверьте, не создан ли уже [issue](https://github.com/dispersi0no/CHAT-VLM-LLM/issues)
 2. Создайте новый issue с подробным описанием:
    - Версия Python и ОС
    - GPU и версия драйверов
@@ -141,28 +141,21 @@ def test_image_preprocessing(sample_image):
 ## Структура проекта
 
 ```
-chatvlmllm/
-├── api.py              # REST API
+CHAT-VLM-LLM/
 ├── app.py              # Streamlit приложение
+├── api.py              # FastAPI REST API
 ├── config.yaml         # Конфигурация
 ├── models/             # Интеграция моделей
-│   ├── __init__.py
 │   ├── base_model.py   # Базовый класс
-│   ├── got_ocr.py      # GOT-OCR
-│   ├── qwen_vl.py      # Qwen2-VL
-│   ├── qwen3_vl.py     # Qwen3-VL
-│   ├── dots_ocr.py     # dots.ocr
-│   └── model_loader.py # Загрузчик моделей
+│   ├── model_loader.py # Загрузчик моделей
+│   ├── qwen3_vl.py     # Qwen3-VL (рабочая)
+│   ├── dots_ocr.py     # dots.ocr (рабочая)
+│   ├── qwen_vl.py      # Qwen2-VL (нестабильна)
+│   ├── got_ocr.py      # GOT-OCR (экспериментальная)
+│   └── ...             # Другие модели
 ├── utils/              # Утилиты
-│   ├── __init__.py
-│   ├── image_processor.py
-│   ├── text_extractor.py
-│   ├── field_parser.py
-│   └── ...
+├── ui/                 # UI компоненты
 ├── tests/              # Тесты
-│   ├── __init__.py
-│   ├── test_models.py
-│   └── test_utils.py
 ├── docs/               # Документация
 └── examples/           # Примеры использования
 ```
@@ -203,7 +196,7 @@ chatvlmllm/
 
 ## Контакты
 
-- GitHub Issues: https://github.com/OlegKarenkikh/chatvlmllm/issues
+- GitHub Issues: https://github.com/dispersi0no/CHAT-VLM-LLM/issues
 - Email: через GitHub профиль
 
 ## Благодарности

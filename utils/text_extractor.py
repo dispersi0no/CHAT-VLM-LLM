@@ -37,15 +37,13 @@ class TextExtractor:
         """Fix common OCR recognition errors."""
         replacements = {
             'l\'': 'I',  # l apostrophe to I
-            '0': 'O',    # In certain contexts
             '|': 'I',    # Pipe to I
             '§': 'S',    # Section sign to S
         }
         
         # Apply replacements (context-aware logic can be added)
-        for old, new in replacements.items():
-            # Only replace in specific contexts to avoid false positives
-            pass
+        for wrong, correct in replacements.items():
+            text = text.replace(wrong, correct)
         
         return text
     

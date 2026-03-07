@@ -8,11 +8,59 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Planned
-- Real model integration (GOT-OCR, Qwen2-VL)
-- Batch processing API
 - Fine-tuning support
 - Cloud deployment guide
 - Performance benchmarks
+
+## [0.3.0] - 2026-03-07
+
+### Added
+- **vLLM Support**
+  - dots.ocr model via vLLM backend
+  - Qwen2-VL / Qwen3-VL vLLM mode
+  - Separate docker-compose-vllm.yml
+
+- **FastAPI REST API** (`api.py`)
+  - OCR endpoint (`POST /ocr`)
+  - Chat endpoint (`POST /chat`)
+  - Batch processing (`POST /batch/ocr`)
+  - Model management endpoints
+
+- **New Models**
+  - dots.ocr integration (SOTA document parser, 100+ languages)
+  - Qwen3-VL (2B/4B/8B) with 32-language OCR, 256K context
+
+- **Infrastructure**
+  - `.dockerignore` for optimized Docker builds
+  - `start_system.py` / `stop_system.py` for system management
+  - Model cache management (`utils/model_cache.py`)
+  - Smart content renderer (`utils/smart_content_renderer.py`)
+
+### Changed
+- **Full Project Audit & Cleanup**
+  - Removed ~370 junk files (462 → ~85 files)
+  - Rewrote `.gitignore` (fixed UTF-16 null bytes)
+  - Pinned all dependency versions in `requirements.txt`
+  - Cleaned `models/__init__.py` — only working model exports
+  - Rewrote `model_loader.py` — single clean loader, no dead imports
+  - Removed dead utils modules (cuda_recovery, mode_switcher, etc.)
+  - Disabled permanent emergency_mode in `config.yaml`
+  - Enabled GPU optimizations (cudnn_benchmark, SDPA, tf32)
+  - Fixed all documentation links (dispersi0no/CHAT-VLM-LLM)
+  - Updated project structure in README, README_DEV, CONTRIBUTING
+  - Fixed CI/CD — black/isort checks now report properly
+  - Fixed tests to match current config.yaml structure
+  - Removed unused scripts (update_blackwell_libraries.py)
+  - Updated docs (architecture, api_guide, models) to reflect reality
+
+### Removed
+- ~370 temporary files (tests, fixes, debug scripts, JSON reports, backups)
+- Duplicate dots_ocr model variants (9 files)
+- Duplicate docker/ directory and docker-compose variants
+- model_loader_emergency.py / model_loader_backup.py
+- Broken Dockerfile.vllm-fixed
+- Empty research_log.md
+- Unused utils (cuda_recovery, optimized_generation, mode_switcher, performance_analyzer, visualizer, memory_controller)
 
 ## [0.2.0] - 2026-01-15
 
@@ -60,7 +108,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - File upload validation
 - Export functionality placeholders
 
-## [0.1.0] - 2026-01-15
+## [0.1.0] - 2026-01-10
 
 ### Added
 - **Project Foundation**
@@ -140,6 +188,6 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for information on how to contribute to t
 
 ## Links
 
-- [GitHub Repository](https://github.com/OlegKarenkikh/chatvlmllm)
-- [Documentation](https://github.com/OlegKarenkikh/chatvlmllm/tree/main/docs)
-- [Issue Tracker](https://github.com/OlegKarenkikh/chatvlmllm/issues)
+- [GitHub Repository](https://github.com/dispersi0no/CHAT-VLM-LLM)
+- [Documentation](https://github.com/dispersi0no/CHAT-VLM-LLM/tree/main/docs)
+- [Issue Tracker](https://github.com/dispersi0no/CHAT-VLM-LLM/issues)

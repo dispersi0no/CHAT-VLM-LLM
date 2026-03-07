@@ -42,10 +42,10 @@ class BBoxVisualizer:
             try:
                 # Попытка загрузить системный шрифт
                 self.font_cache[size] = ImageFont.truetype("arial.ttf", size)
-            except:
+            except (OSError, IOError):
                 try:
                     self.font_cache[size] = ImageFont.truetype("DejaVuSans.ttf", size)
-                except:
+                except (OSError, IOError):
                     # Fallback на стандартный шрифт
                     self.font_cache[size] = ImageFont.load_default()
         return self.font_cache[size]

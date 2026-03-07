@@ -1,0 +1,55 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.egg-info
+.eggs
+dist
+build
+venv
+.venv
+*.egg
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# Testing
+tests/
+.pytest_cache
+.coverage
+htmlcov
+
+# Documentation (not needed in container)
+docs/
+notebooks/
+examples/
+*.md
+!README.md
+LICENSE
+
+# Docker
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Logs & temp
+logs/
+*.log
+results/
+tmp/
+
+# CI/CD
+.github/

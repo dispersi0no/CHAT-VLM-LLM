@@ -13,8 +13,8 @@
 
 ```bash
 # Clone repository
-git clone https://github.com/OlegKarenkikh/chatvlmllm.git
-cd chatvlmllm
+git clone https://github.com/dispersi0no/CHAT-VLM-LLM.git
+cd CHAT-VLM-LLM
 
 # Run automated setup
 bash scripts/setup.sh
@@ -46,16 +46,18 @@ cp .env.example .env
 ## Project Structure
 
 ```
-chatvlmllm/
+CHAT-VLM-LLM/
 ├── app.py                 # Main Streamlit application
+├── api.py                 # FastAPI REST API
 ├── config.yaml            # Model and app configuration
 ├── requirements.txt       # Python dependencies
-├── .env.example          # Environment variables template
 │
 ├── models/               # Model integration modules
 │   ├── base_model.py     # Abstract base class
 │   ├── got_ocr.py        # GOT-OCR implementation
 │   ├── qwen_vl.py        # Qwen2-VL implementation
+│   ├── qwen3_vl.py       # Qwen3-VL implementation
+│   ├── dots_ocr.py       # dots.ocr implementation
 │   └── model_loader.py   # Model factory
 │
 ├── utils/                # Utility modules
@@ -76,10 +78,6 @@ chatvlmllm/
 │   ├── test_models.py
 │   └── test_utils.py
 │
-├── notebooks/            # Jupyter notebooks
-│   ├── 01_model_exploration.ipynb
-│   └── 02_batch_processing.ipynb
-│
 ├── scripts/              # Utility scripts
 │   ├── setup.sh         # Setup script
 │   ├── download_models.py
@@ -87,10 +85,23 @@ chatvlmllm/
 │   ├── cleanup.py       # Cleanup utility
 │   └── run_tests.sh
 │
-└── docs/                 # Documentation
-    ├── models.md
-    ├── architecture.md
-    └── research_log.md
+├── docs/                 # Documentation
+│   ├── api_guide.md
+│   ├── architecture.md
+│   ├── gpu_requirements.md
+│   ├── models.md
+│   ├── model_cache_guide.md
+│   └── qwen3_vl_guide.md
+│
+├── examples/             # Example documents for testing
+├── notebooks/            # Jupyter notebooks
+│   ├── 01_model_exploration.ipynb
+│   └── 02_batch_processing.ipynb
+│
+├── dots_ocr/             # dots.ocr integration module
+├── Dockerfile
+├── docker-compose.yml
+└── requirements.txt
 ```
 
 ## Development Workflow
@@ -145,13 +156,15 @@ class MyModel(BaseModel):
         pass
 ```
 
-2. Add configuration in `config.yaml`:
+2. Add configuration in `config.yaml` (under `transformers` or `vllm` section):
 
 ```yaml
-models:
+transformers:
   my_model:
     name: "My Model"
     model_path: "org/model-name"
+    precision: fp16
+    device_map: auto
     # ... other config
 ```
 
@@ -235,7 +248,7 @@ jupyter notebook notebooks/
 ### Build Docker Image
 
 ```bash
-docker build -t chatvlmllm -f docker/Dockerfile .
+docker build -t chatvlmllm -f Dockerfile .
 ```
 
 ## Troubleshooting
@@ -290,7 +303,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 - [Streamlit Documentation](https://docs.streamlit.io/)
 - [HuggingFace Transformers](https://huggingface.co/docs/transformers/)
 - [PyTorch Documentation](https://pytorch.org/docs/)
-- [Project Wiki](https://github.com/OlegKarenkikh/chatvlmllm/wiki)
+- [Project Wiki](https://github.com/dispersi0no/CHAT-VLM-LLM/wiki)
 
 ## License
 

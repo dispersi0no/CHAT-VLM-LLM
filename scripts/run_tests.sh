@@ -1,7 +1,7 @@
 #!/bin/bash
 # Run tests with coverage
 
-set -e
+set -euo pipefail
 
 echo "=================================="
 echo "Running ChatVLMLLM Tests"

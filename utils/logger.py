@@ -1,5 +1,6 @@
 """Logging configuration for the application."""
 
+import copy
 import logging
 import sys
 from pathlib import Path
@@ -22,6 +23,7 @@ class ColoredFormatter(logging.Formatter):
     
     def format(self, record):
         """Format log record with colors."""
+        record = copy.copy(record)
         if record.levelname in self.COLORS:
             record.levelname = (
                 f"{self.COLORS[record.levelname]}"

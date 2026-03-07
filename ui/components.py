@@ -1,5 +1,6 @@
 """Reusable UI components for Streamlit application."""
 
+import html
 import streamlit as st
 from typing import Dict, Any, List
 import pandas as pd
@@ -15,11 +16,15 @@ def render_metric_card(title: str, value: str, delta: str = None, icon: str = "�
         delta: Optional delta value
         icon: Optional icon emoji
     """
+    _icon = html.escape(str(icon))
+    _title = html.escape(str(title))
+    _value = html.escape(str(value))
+    _delta = html.escape(str(delta)) if delta else None
     st.markdown(
         f'<div class="info-card">'
-        f'<h3>{icon} {title}</h3>'
-        f'<h2 style="color: var(--primary-color);">{value}</h2>'
-        f'{f"<p>{delta}</p>" if delta else ""}'
+        f'<h3>{_icon} {_title}</h3>'
+        f'<h2 style="color: var(--primary-color);">{_value}</h2>'
+        f'{f"<p>{_delta}</p>" if _delta else ""}'
         f'</div>',
         unsafe_allow_html=True
     )
@@ -36,11 +41,11 @@ def render_progress_bar(label: str, progress: float, status: str = "") -> None:
     """
     col1, col2 = st.columns([3, 1])
     with col1:
-        st.markdown(f"**{label}**")
+        st.markdown(f"**{html.escape(str(label))}**")
         st.progress(progress)
     with col2:
         if status:
-            st.markdown(f"<p style='text-align: right;'>{status}</p>", unsafe_allow_html=True)
+            st.markdown(f"<p style='text-align: right;'>{html.escape(str(status))}</p>", unsafe_allow_html=True)
 
 
 def render_model_card(model_key: str, config: Dict[str, Any]) -> None:
@@ -51,14 +56,19 @@ def render_model_card(model_key: str, config: Dict[str, Any]) -> None:
         model_key: Model identifier
         config: Model configuration
     """
+    _name = html.escape(str(config.get('name', '')))
+    _description = html.escape(str(config.get('description', '')))
+    _max_length = html.escape(str(config.get('max_length', '')))
+    _precision = html.escape(str(config.get('precision', '')))
+    _device_map = html.escape(str(config.get('device_map', '')))
     st.markdown(
         f'<div class="feature-card">'
-        f'<h3>🤖 {config["name"]}</h3>'
-        f'<p>{config["description"]}</p>'
+        f'<h3>🤖 {_name}</h3>'
+        f'<p>{_description}</p>'
         f'<ul style="text-align: left; margin-top: 1rem;">'
-        f'<li>Max tokens: {config["max_length"]}</li>'
-        f'<li>Precision: {config["precision"]}</li>'
-        f'<li>Device: {config["device_map"]}</li>'
+        f'<li>Max tokens: {_max_length}</li>'
+        f'<li>Precision: {_precision}</li>'
+        f'<li>Device: {_device_map}</li>'
         f'</ul>'
         f'</div>',
         unsafe_allow_html=True

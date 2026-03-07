@@ -72,17 +72,17 @@ curl http://localhost:8000/models
 ```json
 {
   "available": [
-    {"id": "got_ocr", "name": "GOT-OCR 2.0", "params": "580M"},
-    {"id": "qwen_vl_2b", "name": "Qwen2-VL 2B", "params": "2B"},
-    {"id": "qwen_vl_7b", "name": "Qwen2-VL 7B", "params": "7B"},
-    {"id": "qwen3_vl_2b", "name": "Qwen3-VL 2B", "params": "2B"},
-    {"id": "qwen3_vl_4b", "name": "Qwen3-VL 4B", "params": "4B"},
-    {"id": "qwen3_vl_8b", "name": "Qwen3-VL 8B", "params": "8B"},
-    {"id": "dots_ocr", "name": "dots.ocr", "params": "1.7B"}
+    {"id": "qwen3_vl_2b", "name": "Qwen3-VL 2B", "params": "2B", "status": "working"},
+    {"id": "dots_ocr", "name": "dots.ocr", "params": "1.7B", "status": "working"},
+    {"id": "dots_ocr_final", "name": "dots.ocr Final", "params": "1.7B", "status": "working"},
+    {"id": "got_ocr", "name": "GOT-OCR 2.0", "params": "580M", "status": "experimental"},
+    {"id": "qwen_vl_7b", "name": "Qwen2-VL 7B", "params": "7B", "status": "unstable"}
   ],
   "loaded": ["qwen3_vl_2b"]
 }
 ```
+
+> **Примечание:** Рабочие модели — Qwen3-VL 2B и dots.ocr. Остальные находятся в экспериментальном состоянии.
 
 ### OCR
 
@@ -289,10 +289,9 @@ API возвращает стандартные HTTP коды ошибок:
 | Задача | Рекомендуемая модель |
 |--------|---------------------|
 | Быстрый OCR | qwen3_vl_2b |
-| Качественный OCR | qwen3_vl_8b |
-| Сложные макеты | got_ocr |
-| Много языков | dots_ocr |
-| Анализ документов | qwen3_vl_4b |
+| Мультиязычный OCR (100+ языков) | dots_ocr |
+| Сложные макеты и таблицы | dots_ocr |
+| Чат и анализ документов | qwen3_vl_2b |
 
 ### Оптимизация производительности
 

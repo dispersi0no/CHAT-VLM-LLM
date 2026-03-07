@@ -150,6 +150,8 @@ def validate_file(file: UploadFile, content: bytes) -> None:
     try:
         image = Image.open(io.BytesIO(content))
         image.verify()
+        # verify() закрывает поток, поэтому повторно открываем изображение для дальнейшей обработки
+        image = Image.open(io.BytesIO(content))
     except Exception as e:
         raise HTTPException(
             status_code=400,

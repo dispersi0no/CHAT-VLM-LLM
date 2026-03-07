@@ -7,6 +7,8 @@ from typing import Any, Optional, Callable
 from functools import wraps
 import time
 
+_CACHE_MISS = object()
+
 
 class SimpleCache:
     """Simple file-based cache for storing results."""
@@ -27,34 +29,35 @@ class SimpleCache:
         key_hash = hashlib.md5(key.encode()).hexdigest()
         return self.cache_dir / f"{key_hash}.pkl"
     
-    def get(self, key: str, max_age: Optional[int] = None) -> Optional[Any]:
+    def get(self, key: str, max_age: Optional[int] = None, default: Any = None) -> Any:
         """
         Get value from cache.
         
         Args:
             key: Cache key
             max_age: Maximum age in seconds (None for no expiration)
+            default: Value to return on cache miss (default: None)
             
         Returns:
-            Cached value or None if not found/expired
+            Cached value or default if not found/expired
         """
         cache_path = self._get_cache_path(key)
         
         if not cache_path.exists():
-            return None
+            return default
         
         # Check age if specified
         if max_age is not None:
             file_age = time.time() - cache_path.stat().st_mtime
             if file_age > max_age:
                 cache_path.unlink()  # Remove expired cache
-                return None
+                return default
         
         try:
             with open(cache_path, 'rb') as f:
                 return pickle.load(f)
         except Exception:
-            return None
+            return default
     
     def set(self, key: str, value: Any) -> None:
         """
@@ -103,8 +106,8 @@ def cached(cache: SimpleCache, max_age: Optional[int] = None):
             cache_key = "|".join(key_parts)
             
             # Try to get from cache
-            result = cache.get(cache_key, max_age)
-            if result is not None:
+            result = cache.get(cache_key, max_age, default=_CACHE_MISS)
+            if result is not _CACHE_MISS:
                 return result
             
             # Compute result and cache

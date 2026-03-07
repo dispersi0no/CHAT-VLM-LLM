@@ -72,7 +72,7 @@ def main():
             "--gpus", "all",
             "-p", "8000:8000",
             "--shm-size=8g",
-            "-v", "C:/Users/Colorful/.cache/huggingface:/root/.cache/huggingface:rw",
+            "-v", f"{os.path.expanduser('~/.cache/huggingface')}:/root/.cache/huggingface:rw",
             "-e", "CUDA_VISIBLE_DEVICES=0",
             "-e", "HF_HOME=/root/.cache/huggingface",
             "-e", "TRANSFORMERS_CACHE=/root/.cache/huggingface/hub",

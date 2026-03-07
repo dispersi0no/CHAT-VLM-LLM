@@ -3,6 +3,7 @@
 Утилита для рендеринга BBOX результатов в виде HTML таблицы
 """
 
+import html
 from typing import List, Dict, Any
 
 class BBoxTableRenderer:
@@ -134,18 +135,22 @@ class BBoxTableRenderer:
             display_text = text[:100] + "..." if len(text) > 100 else text
             display_text = display_text.replace('\n', ' ').replace('\r', '')
             
+            _category = html.escape(str(category))
+            _bbox_str = html.escape(str(bbox_str))
+            _display_text = html.escape(str(display_text))
+            _title_text = html.escape(str(text))
             html += f"""
                 <tr>
                     <td class="element-number">{i}</td>
                     <td>
                         <span class="category-badge" style="background-color: {color};">
-                            {category}
+                            {_category}
                         </span>
                     </td>
                     <td>
-                        <code class="bbox-coords">{bbox_str}</code>
+                        <code class="bbox-coords">{_bbox_str}</code>
                     </td>
-                    <td class="element-text" title="{text}">{display_text}</td>
+                    <td class="element-text" title="{_title_text}">{_display_text}</td>
                 </tr>
             """
         
@@ -219,11 +224,13 @@ class BBoxTableRenderer:
         
         for category, count in sorted(categories.items()):
             color = self.get_category_color(category)
+            _cat = html.escape(str(category))
+            _cnt = html.escape(str(count))
             html += f"""
                 <div class="legend-item">
                     <div class="legend-color" style="background-color: {color};"></div>
-                    <span class="legend-label">{category}</span>
-                    <span class="legend-count">{count}</span>
+                    <span class="legend-label">{_cat}</span>
+                    <span class="legend-count">{_cnt}</span>
                 </div>
             """
         

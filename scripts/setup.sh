@@ -1,7 +1,7 @@
 #!/bin/bash
 # Setup script for ChatVLMLLM project
 
-set -e
+set -euo pipefail
 
 echo "=================================="
 echo "ChatVLMLLM Setup Script"
@@ -58,5 +58,5 @@ echo "1. Activate virtual environment: source venv/bin/activate"
 echo "2. Run the application: streamlit run app.py"
 echo "3. Open browser: http://localhost:8501"
 echo ""
-echo "For more information, see QUICKSTART.md"
+echo "For more information, see README.md"
 echo ""
