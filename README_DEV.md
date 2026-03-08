@@ -48,25 +48,28 @@ cp .env.example .env
 ```
 CHAT-VLM-LLM/
 ├── app.py                 # Main Streamlit application
-├── api.py                 # FastAPI REST API
-├── config.yaml            # Model and app configuration
-├── requirements.txt       # Python dependencies
+├── api.py                 # FastAPI REST API (port 8001)
+├── config.yaml            # Model configuration (transformers + vllm)
+├── requirements.txt       # Python dependencies (pinned versions)
 │
 ├── models/               # Model integration modules
+│   ├── __init__.py       # Public exports
 │   ├── base_model.py     # Abstract base class
-│   ├── got_ocr.py        # GOT-OCR implementation
-│   ├── qwen_vl.py        # Qwen2-VL implementation
+│   ├── model_loader.py   # Model factory
 │   ├── qwen3_vl.py       # Qwen3-VL implementation
+│   ├── qwen_vl.py        # Qwen2-VL implementation
+│   ├── got_ocr.py        # GOT-OCR implementation
 │   ├── dots_ocr.py       # dots.ocr implementation
-│   └── model_loader.py   # Model factory
+│   ├── dots_ocr_final.py # dots.ocr final variant
+│   └── experimental/     # Experimental models
 │
 ├── utils/                # Utility modules
 │   ├── image_processor.py    # Image preprocessing
 │   ├── text_extractor.py     # Text extraction
 │   ├── field_parser.py       # Field parsing
 │   ├── markdown_renderer.py  # Markdown formatting
-│   ├── logger.py            # Logging configuration
-│   ├── cache.py             # Caching utilities
+│   ├── logger.py            # Logging (setup_logger)
+│   ├── cache.py             # JSON file cache
 │   ├── export.py            # Export functions
 │   └── validators.py        # Input validation
 │
@@ -75,8 +78,11 @@ CHAT-VLM-LLM/
 │   └── components.py     # Reusable components
 │
 ├── tests/                # Test suite
-│   ├── test_models.py
-│   └── test_utils.py
+│   ├── conftest.py       # Shared fixtures, sys.path setup
+│   ├── test_models.py    # Model integration tests
+│   ├── test_utils.py     # Utility function tests
+│   ├── test_api.py       # API endpoints, rate limiter, validators
+│   └── test_cache.py     # JSON cache, @cached decorator
 │
 ├── scripts/              # Utility scripts
 │   ├── setup.sh         # Setup script
@@ -86,22 +92,66 @@ CHAT-VLM-LLM/
 │   └── run_tests.sh
 │
 ├── docs/                 # Documentation
-│   ├── api_guide.md
-│   ├── architecture.md
-│   ├── gpu_requirements.md
-│   ├── models.md
+│   ├── api_guide.md      # REST API reference
+│   ├── architecture.md   # System architecture
+│   ├── gpu_requirements.md # GPU/VRAM guide
+│   ├── models.md         # Model catalog
 │   ├── model_cache_guide.md
 │   └── qwen3_vl_guide.md
 │
 ├── examples/             # Example documents for testing
 ├── notebooks/            # Jupyter notebooks
-│   ├── 01_model_exploration.ipynb
-│   └── 02_batch_processing.ipynb
-│
 ├── dots_ocr/             # dots.ocr integration module
-├── Dockerfile
-├── docker-compose.yml
-└── requirements.txt
+│
+├── Dockerfile            # Full image (Streamlit + FastAPI, CUDA cu126)
+├── Dockerfile.light      # Lightweight image without GPU deps
+├── docker-compose.yml    # Standard stack (Streamlit + Nginx)
+├── docker-compose-vllm.yml # vLLM stack (per-model containers)
+├── nginx.conf            # Reverse proxy config
+│
+├── start_system.py       # System launcher
+├── stop_system.py        # System shutdown
+├── single_container_manager.py
+├── vllm_streamlit_adapter.py
+│
+├── .github/workflows/ci.yml  # CI pipeline (lint + tests)
+├── .dockerignore
+├── .gitignore
+└── .env.example
+```
+
+## Running the Application
+
+### Streamlit UI
+
+```bash
+streamlit run app.py
+```
+
+### FastAPI REST API
+
+```bash
+# ВАЖНО: запускайте с --workers 1
+# Несколько воркеров вызовут конфликт кешей моделей в GPU памяти
+uvicorn api:app --host 0.0.0.0 --port 8001 --workers 1
+
+# Документация: http://localhost:8001/docs
+```
+
+### Docker
+
+```bash
+# Стандартный стек (Streamlit + Nginx)
+docker compose up -d
+
+# vLLM стек (отдельные контейнеры для каждой модели)
+docker compose -f docker-compose-vllm.yml up -d
+
+# Только собрать образ
+docker build -t chatvlmllm -f Dockerfile .
+
+# Облегчённый образ без GPU
+docker build -t chatvlmllm-light -f Dockerfile.light .
 ```
 
 ## Development Workflow
@@ -128,14 +178,17 @@ mypy models/ utils/
 pytest
 
 # Run with coverage
-pytest --cov=models --cov=utils
+pytest --cov=models --cov=utils --cov=api
 
 # Run specific test file
-pytest tests/test_models.py
+pytest tests/test_api.py
+pytest tests/test_cache.py
 
 # Run with verbose output
 pytest -v
 ```
+
+Tests do NOT require GPU or model loading — they run in CI.
 
 ### 3. Adding New Models
 
@@ -243,12 +296,6 @@ python scripts/download_models.py
 
 ```bash
 jupyter notebook notebooks/
-```
-
-### Build Docker Image
-
-```bash
-docker build -t chatvlmllm -f Dockerfile .
 ```
 
 ## Troubleshooting

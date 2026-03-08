@@ -8,19 +8,21 @@ ChatVLMLLM предоставляет REST API на базе FastAPI для пр
 
 ```bash
 # Режим разработки с автоперезагрузкой
-uvicorn api:app --host 0.0.0.0 --port 8000 --reload
+uvicorn api:app --host 0.0.0.0 --port 8001 --reload --workers 1
 
 # Продакшен режим
-uvicorn api:app --host 0.0.0.0 --port 8000 --workers 4
+uvicorn api:app --host 0.0.0.0 --port 8001 --workers 1
 ```
+
+> **ВАЖНО:** Запускайте с `--workers 1`. Несколько воркеров вызовут конфликт кешей моделей в GPU памяти.
 
 ## Документация API
 
 После запуска сервера доступна интерактивная документация:
 
-- **Swagger UI**: http://localhost:8000/docs
-- **ReDoc**: http://localhost:8000/redoc
-- **OpenAPI JSON**: http://localhost:8000/openapi.json
+- **Swagger UI**: http://localhost:8001/docs
+- **ReDoc**: http://localhost:8001/redoc
+- **OpenAPI JSON**: http://localhost:8001/openapi.json
 
 ## Эндпоинты
 
@@ -30,7 +32,7 @@ uvicorn api:app --host 0.0.0.0 --port 8000 --workers 4
 Корневой эндпоинт с информацией об API.
 
 ```bash
-curl http://localhost:8000/
+curl http://localhost:8001/
 ```
 
 Ответ:
@@ -47,7 +49,7 @@ curl http://localhost:8000/
 Проверка здоровья сервиса и статуса GPU.
 
 ```bash
-curl http://localhost:8000/health
+curl http://localhost:8001/health
 ```
 
 Ответ:
@@ -65,7 +67,7 @@ curl http://localhost:8000/health
 Список доступных моделей.
 
 ```bash
-curl http://localhost:8000/models
+curl http://localhost:8001/models
 ```
 
 Ответ:
@@ -73,16 +75,16 @@ curl http://localhost:8000/models
 {
   "available": [
     {"id": "qwen3_vl_2b", "name": "Qwen3-VL 2B", "params": "2B", "status": "working"},
+    {"id": "qwen_vl_2b", "name": "Qwen2-VL 2B", "params": "2B", "status": "unstable"},
     {"id": "dots_ocr", "name": "dots.ocr", "params": "1.7B", "status": "working"},
     {"id": "dots_ocr_final", "name": "dots.ocr Final", "params": "1.7B", "status": "working"},
-    {"id": "got_ocr", "name": "GOT-OCR 2.0", "params": "580M", "status": "experimental"},
-    {"id": "qwen_vl_7b", "name": "Qwen2-VL 7B", "params": "7B", "status": "unstable"}
+    {"id": "got_ocr", "name": "GOT-OCR 2.0", "params": "580M", "status": "experimental"}
   ],
   "loaded": ["qwen3_vl_2b"]
 }
 ```
 
-> **Примечание:** Рабочие модели — Qwen3-VL 2B и dots.ocr. Остальные находятся в экспериментальном состоянии.
+> **Примечание:** Основные модели — Qwen3-VL 2B и dots.ocr. Qwen2-VL 7B и Phi-3.5 Vision доступны только через vLLM режим (docker-compose-vllm.yml), а не через этот API.
 
 ### OCR
 
@@ -92,13 +94,13 @@ curl http://localhost:8000/models
 **Параметры:**
 | Параметр | Тип | Обязательный | Описание |
 |----------|-----|--------------|----------|
-| file | File | Да | Изображение (JPG, PNG) |
+| file | File | Да | Изображение (JPG, PNG, BMP, TIFF, WebP) |
 | model | string | Нет | Модель (по умолчанию: qwen3_vl_2b) |
 | language | string | Нет | Подсказка языка |
 
 **Пример с cURL:**
 ```bash
-curl -X POST "http://localhost:8000/ocr" \
+curl -X POST "http://localhost:8001/ocr" \
   -F "file=@document.jpg" \
   -F "model=qwen3_vl_2b"
 ```
@@ -109,7 +111,7 @@ import requests
 
 with open('document.jpg', 'rb') as f:
     response = requests.post(
-        'http://localhost:8000/ocr',
+        'http://localhost:8001/ocr',
         files={'file': f},
         params={'model': 'qwen3_vl_2b', 'language': 'Russian'}
     )
@@ -145,7 +147,7 @@ print(result['text'])
 
 **Пример с cURL:**
 ```bash
-curl -X POST "http://localhost:8000/chat" \
+curl -X POST "http://localhost:8001/chat" \
   -F "file=@image.jpg" \
   -F "prompt=Что изображено на картинке?" \
   -F "model=qwen3_vl_2b"
@@ -157,7 +159,7 @@ import requests
 
 with open('image.jpg', 'rb') as f:
     response = requests.post(
-        'http://localhost:8000/chat',
+        'http://localhost:8001/chat',
         files={'file': f},
         data={
             'prompt': 'Опишите содержимое этого документа',
@@ -189,12 +191,12 @@ print(result['response'])
 **Параметры:**
 | Параметр | Тип | Обязательный | Описание |
 |----------|-----|--------------|----------|
-| files | File[] | Да | Список изображений |
+| files | File[] | Да | Список изображений (макс. 10) |
 | model | string | Нет | Модель |
 
 **Пример с cURL:**
 ```bash
-curl -X POST "http://localhost:8000/batch/ocr" \
+curl -X POST "http://localhost:8001/batch/ocr" \
   -F "files=@doc1.jpg" \
   -F "files=@doc2.jpg" \
   -F "files=@doc3.jpg" \
@@ -212,7 +214,7 @@ files = [
 ]
 
 response = requests.post(
-    'http://localhost:8000/batch/ocr',
+    'http://localhost:8001/batch/ocr',
     files=files,
     params={'model': 'qwen3_vl_2b'}
 )
@@ -253,7 +255,7 @@ for item in result['results']:
 Выгрузка модели из памяти.
 
 ```bash
-curl -X DELETE "http://localhost:8000/models/qwen3_vl_2b"
+curl -X DELETE "http://localhost:8001/models/qwen3_vl_2b"
 ```
 
 **Ответ:**
@@ -264,6 +266,32 @@ curl -X DELETE "http://localhost:8000/models/qwen3_vl_2b"
 }
 ```
 
+## Безопасность и лимиты
+
+### Rate Limiting
+
+API ограничивает количество запросов на IP (по умолчанию 60 запросов/минуту, настраивается через переменную окружения `RATE_LIMIT`).
+
+При превышении лимита возвращается:
+```json
+{
+  "detail": "Превышен лимит запросов. Попробуйте через минуту."
+}
+```
+
+Заголовки ответа содержат `X-RateLimit-Remaining` с количеством оставшихся запросов.
+
+### Валидация файлов
+
+- Максимальный размер файла: **10 MB** (413 при превышении)
+- Максимум файлов в пакете: **10** (400 при превышении)
+- Разрешённые расширения: `.jpg`, `.jpeg`, `.png`, `.bmp`, `.tiff`, `.tif`, `.webp`
+- Содержимое проверяется через PIL (не только расширение)
+
+### CORS
+
+Настраивается через переменную окружения `CORS_ORIGINS` (по умолчанию: `localhost:8501,localhost:3000`).
+
 ## Обработка ошибок
 
 API возвращает стандартные HTTP коды ошибок:
@@ -271,14 +299,17 @@ API возвращает стандартные HTTP коды ошибок:
 | Код | Описание |
 |-----|----------|
 | 200 | Успешный запрос |
-| 400 | Неверный запрос |
-| 404 | Ресурс не найден |
+| 400 | Неверный запрос (невалидный файл, слишком много файлов) |
+| 404 | Ресурс не найден (модель не загружена) |
+| 413 | Файл слишком большой (>10 MB) |
+| 422 | Ошибка валидации параметров |
+| 429 | Превышен лимит запросов (rate limiting) |
 | 500 | Внутренняя ошибка сервера |
 
 Пример ошибки:
 ```json
 {
-  "detail": "Failed to load model: Model 'invalid_model' not found"
+  "detail": "Недопустимое расширение файла. Разрешены: .jpg, .jpeg, .png, .bmp, .tiff, .tif, .webp"
 }
 ```
 
@@ -286,12 +317,13 @@ API возвращает стандартные HTTP коды ошибок:
 
 ### Выбор модели
 
-| Задача | Рекомендуемая модель |
-|--------|---------------------|
-| Быстрый OCR | qwen3_vl_2b |
-| Мультиязычный OCR (100+ языков) | dots_ocr |
-| Сложные макеты и таблицы | dots_ocr |
-| Чат и анализ документов | qwen3_vl_2b |
+| Задача | Рекомендуемая модель | Режим |
+|--------|---------------------|-------|
+| Быстрый OCR | qwen3_vl_2b | transformers (API) |
+| Мультиязычный OCR (100+ языков) | dots_ocr | vLLM |
+| Сложные макеты и таблицы | dots_ocr | vLLM |
+| Чат и анализ документов | qwen3_vl_2b | transformers (API) |
+| Тяжёлые задачи (7B) | qwen2_vl_7b | vLLM |
 
 ### Оптимизация производительности
 
@@ -299,13 +331,6 @@ API возвращает стандартные HTTP коды ошибок:
 2. **Пакетная обработка**: Используйте `/batch/ocr` для нескольких файлов
 3. **Размер изображений**: Оптимальный размер 1024-2048px по большей стороне
 4. **Кеширование**: Модели кешируются между запросами
-
-### Ограничения
-
-- Максимальный размер файла: 10MB
-- Поддерживаемые форматы: JPG, PNG, BMP, TIFF
-- Таймаут запроса: 30 секунд
-- Максимум файлов в пакете: 10
 
 ## Примеры интеграции
 
@@ -322,7 +347,7 @@ async def ocr_async(image_path: str) -> str:
             data.add_field('file', f, filename='image.jpg')
             
             async with session.post(
-                'http://localhost:8000/ocr',
+                'http://localhost:8001/ocr',
                 data=data,
                 params={'model': 'qwen3_vl_2b'}
             ) as response:
@@ -340,7 +365,7 @@ import requests
 from typing import Optional, List, Dict
 
 class ChatVLMClient:
-    def __init__(self, base_url: str = "http://localhost:8000"):
+    def __init__(self, base_url: str = "http://localhost:8001"):
         self.base_url = base_url
     
     def health(self) -> Dict:
