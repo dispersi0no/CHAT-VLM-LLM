@@ -1,6 +1,5 @@
 # Core ML
-torch==2.5.1
-torchvision==0.20.1
+# torch installed via Dockerfile (with --index-url https://download.pytorch.org/whl/cu121)
 transformers==4.47.1
 accelerate==1.2.1
 

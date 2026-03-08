@@ -1,36 +1,36 @@
-version: '3.8'
+x-vllm-common: &vllm-common
+  image: vllm/vllm-openai:v0.16.0
+  restart: "no"
+  volumes:
+    - ${HOME}/.cache/huggingface:/home/vllm/.cache/huggingface:rw
+  environment:
+    - HF_HOME=/home/vllm/.cache/huggingface
+    - TRANSFORMERS_CACHE=/home/vllm/.cache/huggingface/hub
+    - HF_HUB_CACHE=/home/vllm/.cache/huggingface/hub
+    - HF_TOKEN=${HF_TOKEN:-}
+    - CUDA_VISIBLE_DEVICES=0
+    - NVIDIA_VISIBLE_DEVICES=all
+  deploy:
+    resources:
+      reservations:
+        devices:
+          - driver: nvidia
+            count: all
+            capabilities: [gpu]
+  healthcheck:
+    test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+    interval: 30s
+    timeout: 10s
+    retries: 3
+    start_period: 120s
 
 services:
   # DotsOCR - основная OCR модель (протестирована и работает)
   dots-ocr:
-    image: vllm/vllm-openai:v0.16.0
+    <<: *vllm-common
     container_name: dots-ocr-fixed
-    restart: "no"  # ИСПРАВЛЕНО: Отключен автоперезапуск для соблюдения принципа одного контейнера
     ports:
       - "8000:8000"
-    volumes:
-      # КРИТИЧНО: Монтирование кеша HuggingFace с правами на чтение и запись
-      - ${HOME}/.cache/huggingface/hub:/root/.cache/huggingface/hub:rw
-      - ${HOME}/.cache/huggingface/hub:/home/vllm/.cache/huggingface/hub:rw
-      # Дополнительные кеши для совместимости
-      - ${HOME}/.cache/huggingface:/root/.cache/huggingface:rw
-      - ${HOME}/.cache/huggingface:/home/vllm/.cache/huggingface:rw
-    environment:
-      # Переменные окружения для кеша
-      - HF_HOME=/root/.cache/huggingface
-      - TRANSFORMERS_CACHE=/root/.cache/huggingface/hub
-      - HF_HUB_CACHE=/root/.cache/huggingface/hub
-      - HF_TOKEN=${HF_TOKEN:-}
-      # Настройки CUDA
-      - CUDA_VISIBLE_DEVICES=0
-      - NVIDIA_VISIBLE_DEVICES=all
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
     shm_size: 8g
     command: >
       --model rednote-hilab/dots.ocr
@@ -42,39 +42,13 @@ services:
       --dtype bfloat16
       --enforce-eager
       --disable-log-requests
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 120s
 
   # Qwen2-VL 2B - легкая VLM модель (совместима с vLLM)
   qwen2-vl-2b:
-    image: vllm/vllm-openai:v0.16.0
+    <<: *vllm-common
     container_name: qwen-qwen2-vl-2b-instruct-vllm
-    restart: "no"  # ИСПРАВЛЕНО: Отключен автоперезапуск для соблюдения принципа одного контейнера
     ports:
       - "8001:8000"
-    volumes:
-      - ${HOME}/.cache/huggingface/hub:/root/.cache/huggingface/hub:rw
-      - ${HOME}/.cache/huggingface/hub:/home/vllm/.cache/huggingface/hub:rw
-      - ${HOME}/.cache/huggingface:/root/.cache/huggingface:rw
-      - ${HOME}/.cache/huggingface:/home/vllm/.cache/huggingface:rw
-    environment:
-      - HF_HOME=/root/.cache/huggingface
-      - TRANSFORMERS_CACHE=/root/.cache/huggingface/hub
-      - HF_HUB_CACHE=/root/.cache/huggingface/hub
-      - HF_TOKEN=${HF_TOKEN:-}
-      - CUDA_VISIBLE_DEVICES=0
-      - NVIDIA_VISIBLE_DEVICES=all
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
     shm_size: 6g
     command: >
       --model Qwen/Qwen2-VL-2B-Instruct
@@ -85,41 +59,15 @@ services:
       --gpu-memory-utilization 0.6
       --dtype bfloat16
       --disable-log-requests
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 120s
     profiles:
       - multi-model
 
   # Qwen3-VL 2B - улучшенная VLM модель (рекомендуется)
   qwen3-vl-2b:
-    image: vllm/vllm-openai:v0.16.0
+    <<: *vllm-common
     container_name: qwen-qwen3-vl-2b-instruct-vllm
-    restart: "no"  # ИСПРАВЛЕНО: Отключен автоперезапуск для соблюдения принципа одного контейнера
     ports:
       - "8004:8000"
-    volumes:
-      - ${HOME}/.cache/huggingface/hub:/root/.cache/huggingface/hub:rw
-      - ${HOME}/.cache/huggingface/hub:/home/vllm/.cache/huggingface/hub:rw
-      - ${HOME}/.cache/huggingface:/root/.cache/huggingface:rw
-      - ${HOME}/.cache/huggingface:/home/vllm/.cache/huggingface:rw
-    environment:
-      - HF_HOME=/root/.cache/huggingface
-      - TRANSFORMERS_CACHE=/root/.cache/huggingface/hub
-      - HF_HUB_CACHE=/root/.cache/huggingface/hub
-      - HF_TOKEN=${HF_TOKEN:-}
-      - CUDA_VISIBLE_DEVICES=0
-      - NVIDIA_VISIBLE_DEVICES=all
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
     shm_size: 6g
     command: >
       --model Qwen/Qwen3-VL-2B-Instruct
@@ -130,41 +78,15 @@ services:
       --gpu-memory-utilization 0.6
       --dtype bfloat16
       --disable-log-requests
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 120s
     profiles:
       - multi-model
 
   # Phi-3.5 Vision - продвинутая VLM модель (требует больше памяти)
   phi35-vision:
-    image: vllm/vllm-openai:v0.16.0
+    <<: *vllm-common
     container_name: microsoft-phi-3-5-vision-instruct-vllm
-    restart: "no"  # ИСПРАВЛЕНО: Отключен автоперезапуск для соблюдения принципа одного контейнера
     ports:
       - "8002:8000"
-    volumes:
-      - ${HOME}/.cache/huggingface/hub:/root/.cache/huggingface/hub:rw
-      - ${HOME}/.cache/huggingface/hub:/home/vllm/.cache/huggingface/hub:rw
-      - ${HOME}/.cache/huggingface:/root/.cache/huggingface:rw
-      - ${HOME}/.cache/huggingface:/home/vllm/.cache/huggingface:rw
-    environment:
-      - HF_HOME=/root/.cache/huggingface
-      - TRANSFORMERS_CACHE=/root/.cache/huggingface/hub
-      - HF_HUB_CACHE=/root/.cache/huggingface/hub
-      - HF_TOKEN=${HF_TOKEN:-}
-      - CUDA_VISIBLE_DEVICES=0
-      - NVIDIA_VISIBLE_DEVICES=all
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
     shm_size: 8g
     command: >
       --model microsoft/Phi-3.5-vision-instruct
@@ -176,42 +98,16 @@ services:
       --dtype bfloat16
       --enforce-eager
       --disable-log-requests
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 120s
     profiles:
       - multi-model
       - high-memory
 
   # Qwen2-VL 7B - большая VLM модель (только для мощных GPU)
   qwen2-vl-7b:
-    image: vllm/vllm-openai:v0.16.0
+    <<: *vllm-common
     container_name: qwen-qwen2-vl-7b-instruct-vllm
-    restart: "no"  # ИСПРАВЛЕНО: Отключен автоперезапуск для соблюдения принципа одного контейнера
     ports:
       - "8003:8000"
-    volumes:
-      - ${HOME}/.cache/huggingface/hub:/root/.cache/huggingface/hub:rw
-      - ${HOME}/.cache/huggingface/hub:/home/vllm/.cache/huggingface/hub:rw
-      - ${HOME}/.cache/huggingface:/root/.cache/huggingface:rw
-      - ${HOME}/.cache/huggingface:/home/vllm/.cache/huggingface:rw
-    environment:
-      - HF_HOME=/root/.cache/huggingface
-      - TRANSFORMERS_CACHE=/root/.cache/huggingface/hub
-      - HF_HUB_CACHE=/root/.cache/huggingface/hub
-      - HF_TOKEN=${HF_TOKEN:-}
-      - CUDA_VISIBLE_DEVICES=0
-      - NVIDIA_VISIBLE_DEVICES=all
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
     shm_size: 12g
     command: >
       --model Qwen/Qwen2-VL-7B-Instruct
@@ -222,12 +118,6 @@ services:
       --gpu-memory-utilization 0.5
       --dtype bfloat16
       --disable-log-requests
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 120s
     profiles:
       - high-memory
 
@@ -235,7 +125,7 @@ services:
   nginx-proxy:
     image: nginx:alpine
     container_name: vllm-proxy
-    restart: "no"  # ИСПРАВЛЕНО: Отключен автоперезапуск
+    restart: "no"
     ports:
       - "8080:80"
     volumes:
@@ -244,17 +134,3 @@ services:
       - dots-ocr
     profiles:
       - proxy
-
-# Именованные тома для кеша (альтернативный подход)
-volumes:
-  huggingface-cache:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ${HOME}/.cache/huggingface
-
-# Сети для изоляции
-networks:
-  vllm-network:
-    driver: bridge
