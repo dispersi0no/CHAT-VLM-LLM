@@ -512,18 +512,6 @@ class XMLTableFormatter:
         result = []
         if '<table' in text.lower():
             analysis = analyze_ocr_output(text)
-            if 'processed_data' in analysis and 'clean_text' in analysis['processed_data']:
-                clean_text = analysis['processed_data']['clean_text']
-                result.append("Текст документа:")
-                result.append(clean_text)
-                result.append("")
-            if extract_fields and 'processed_data' in analysis and 'fields' in analysis['processed_data']:
-                fields = analysis['processed_data']['fields']
-                if fields:
-                    result.append("Извлеченные данные:")
-                    for key, value in fields.items():
-                        result.append(f"  {key.upper()}: {value}")
-                    result.append("")
             if format_tables and 'tables' in analysis:
                 for i, table in enumerate(analysis['tables']):
                     result.append(f"Таблица {i+1}:")
