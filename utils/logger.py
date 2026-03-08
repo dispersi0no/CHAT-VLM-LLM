@@ -83,9 +83,5 @@ def setup_logger(
     return logger
 
 
-# Create default logger
-logger = setup_logger(
-    name="chatvlmllm",
-    level="INFO",
-    log_file=f"logs/chatvlmllm_{datetime.now().strftime('%Y%m%d')}.log"
-)
+# Default logger — console only, no file side-effect on import
+logger = setup_logger(name="chatvlmllm", level="INFO")
