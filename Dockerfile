@@ -11,6 +11,7 @@ RUN apt-get update && apt-get install -y \
     python3-pip \
     git \
     wget \
+    curl \
     libgl1-mesa-glx \
     libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/* \
@@ -19,14 +20,26 @@ RUN apt-get update && apt-get install -y \
 # Copy requirements first for better caching
 COPY requirements.txt .
 
-# Install PyTorch with CUDA support
+# Install PyTorch with CUDA 12.1 support
 RUN pip install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+
+# Install flash-attn using pre-built wheel (no CUDA dev toolkit required)
+RUN pip install --no-cache-dir flash-attn --no-build-isolation
 
 # Install other dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application files
 COPY . .
+
+# Create non-root user and transfer ownership
+RUN useradd -m -u 1000 appuser \
+    && chown -R appuser:appuser /app
+
+# Set HuggingFace cache directory for non-root user
+ENV HF_HOME=/home/appuser/.cache/huggingface
+
+USER appuser
 
 # Expose ports
 EXPOSE 8501 8000

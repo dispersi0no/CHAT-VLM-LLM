@@ -28,14 +28,31 @@ WORKDIR /app
 COPY requirements.txt .
 
 # Install Python dependencies
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --upgrade pip
+
+# Install PyTorch with CUDA 12.1 support
+RUN pip install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+
+# Install flash-attn using pre-built wheel (no CUDA dev toolkit required)
+RUN pip install --no-cache-dir flash-attn --no-build-isolation
+
+# Install remaining dependencies
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY . .
 
 # Create necessary directories
 RUN mkdir -p models utils ui docs examples tests
+
+# Create non-root user and transfer ownership
+RUN useradd -m -u 1000 appuser \
+    && chown -R appuser:appuser /app
+
+# Set HuggingFace cache directory for non-root user
+ENV HF_HOME=/home/appuser/.cache/huggingface
+
+USER appuser
 
 # Expose Streamlit port
 EXPOSE 8501

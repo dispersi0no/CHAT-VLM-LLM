@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   chatvlmllm:
     build:
@@ -11,11 +9,12 @@ services:
     volumes:
       - ../models:/app/models
       - ../examples:/app/examples
-      - model_cache:/root/.cache/huggingface
+      - model_cache:/home/appuser/.cache/huggingface
     environment:
       - STREAMLIT_SERVER_HEADLESS=true
       - STREAMLIT_SERVER_FILE_WATCHER_TYPE=none
       - CUDA_VISIBLE_DEVICES=0  # Set GPU device
+      - HF_HOME=/home/appuser/.cache/huggingface
     deploy:
       resources:
         reservations:

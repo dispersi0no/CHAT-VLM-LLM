@@ -1,12 +1,11 @@
 # Core ML
-torch>=2.0.0
-torchvision>=0.15.0
+# torch installed via Dockerfile with CUDA support (--index-url https://download.pytorch.org/whl/cu121)
 transformers>=4.36.0
 accelerate>=0.25.0
 
 # VLM specific
 qwen-vl-utils
-flash-attn>=2.3.0
+# flash-attn installed via Dockerfile (requires CUDA; uses pre-built wheel to avoid CUDA dev toolkit)
 bitsandbytes>=0.41.0
 
 # API
