@@ -9,6 +9,8 @@ import requests
 import time
 import json
 import subprocess
+import yaml
+from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 import streamlit as st
 
@@ -16,52 +18,40 @@ class SingleContainerManager:
     def __init__(self):
         self.client = docker.from_env()
         
-        # Конфигурация доступных моделей
-        self.models_config = {
-            "dots.ocr": {
-                "container_name": "dots-ocr-fixed",
-                "compose_service": "dots-ocr",
-                "port": 8000,
-                "model_path": "rednote-hilab/dots.ocr",
-                "display_name": "dots.ocr (OCR специалист)",
-                "memory_gb": 4.5,
-                "startup_time": 60,  # секунды
-                "description": "Специализированная OCR модель для документов"
-            },
-            "qwen3-vl-2b": {
-                "container_name": "qwen-qwen3-vl-2b-instruct-vllm",
-                "compose_service": "qwen3-vl-2b",
-                "port": 8004,
-                "model_path": "Qwen/Qwen3-VL-2B-Instruct",
-                "display_name": "Qwen3-VL 2B (Рекомендуется)",
-                "memory_gb": 6.5,
-                "startup_time": 120,
-                "description": "Универсальная VLM модель с высокой точностью"
-            },
-            "qwen2-vl-2b": {
-                "container_name": "qwen-qwen2-vl-2b-instruct-vllm",
-                "compose_service": "qwen2-vl-2b",
-                "port": 8001,
-                "model_path": "Qwen/Qwen2-VL-2B-Instruct",
-                "display_name": "Qwen2-VL 2B (Стабильная)",
-                "memory_gb": 6.0,
-                "startup_time": 100,
-                "description": "Стабильная VLM модель для общих задач"
-            },
-            "phi35-vision": {
-                "container_name": "microsoft-phi-3-5-vision-instruct-vllm",
-                "compose_service": "phi35-vision",
-                "port": 8002,
-                "model_path": "microsoft/Phi-3.5-vision-instruct",
-                "display_name": "Phi-3.5 Vision (Продвинутая)",
-                "memory_gb": 8.0,
-                "startup_time": 150,
-                "description": "Продвинутая модель Microsoft для сложных задач"
-            }
-        }
+        # Конфигурация доступных моделей загружается из config.yaml → vllm:
+        self.models_config = self._load_models_config()
         
         self.compose_file = "docker-compose-vllm.yml"
         self.current_active_model = None
+
+    @staticmethod
+    def _load_models_config() -> Dict:
+        """Загружает конфигурацию vLLM моделей из config.yaml."""
+        config_path = Path("config.yaml")
+        try:
+            with open(config_path, "r", encoding="utf-8") as f:
+                config = yaml.safe_load(f)
+        except FileNotFoundError:
+            raise FileNotFoundError(
+                f"Конфигурационный файл не найден: {config_path.resolve()}"
+            )
+        except yaml.YAMLError as exc:
+            raise ValueError(f"Ошибка разбора config.yaml: {exc}") from exc
+        vllm_entries = config.get("vllm", {})
+        models: Dict = {}
+        for model_key, entry in vllm_entries.items():
+            compose_service = entry.get("compose_service", "")
+            models[compose_service] = {
+                "container_name": entry.get("container_name", ""),
+                "compose_service": compose_service,
+                "port": entry.get("port", 8000),
+                "model_path": entry.get("model_path", ""),
+                "display_name": entry.get("display_name") or entry.get("name", model_key),
+                "memory_gb": entry.get("memory_gb", 0),
+                "startup_time": entry.get("startup_time", 60),
+                "description": entry.get("description", ""),
+            }
+        return models
     
     def get_container_status(self, container_name: str) -> Dict:
         """Получение детального статуса контейнера"""

@@ -19,7 +19,6 @@ import io
 import time
 import logging
 import os
-# import magic  # python-magic для определения MIME-типа - временно отключено для Windows
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

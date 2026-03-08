@@ -49,6 +49,13 @@ vllm:
     context_length: 2048
     precision: fp16
     trust_remote_code: true
+    container_name: dots-ocr-fixed
+    compose_service: dots-ocr
+    port: 8000
+    display_name: "dots.ocr (OCR специалист)"
+    memory_gb: 4.5
+    startup_time: 60
+    description: "Специализированная OCR модель для документов"
   
   qwen_vl_2b_vllm:
     model_path: Qwen/Qwen2-VL-2B-Instruct
@@ -57,6 +64,13 @@ vllm:
     context_length: 4096
     precision: fp16
     trust_remote_code: true
+    container_name: qwen-qwen2-vl-2b-instruct-vllm
+    compose_service: qwen2-vl-2b
+    port: 8001
+    display_name: "Qwen2-VL 2B (Стабильная)"
+    memory_gb: 6.0
+    startup_time: 100
+    description: "Стабильная VLM модель для общих задач"
   
   qwen3_vl_2b_vllm:
     model_path: Qwen/Qwen3-VL-2B-Instruct
@@ -65,22 +79,31 @@ vllm:
     context_length: 4096
     precision: fp16
     trust_remote_code: true
+    container_name: qwen-qwen3-vl-2b-instruct-vllm
+    compose_service: qwen3-vl-2b
+    port: 8004
+    display_name: "Qwen3-VL 2B (Рекомендуется)"
+    memory_gb: 6.5
+    startup_time: 120
+    description: "Универсальная VLM модель с высокой точностью"
+
+  phi35_vision_vllm:
+    model_path: microsoft/Phi-3.5-vision-instruct
+    name: Phi-3.5 Vision (vLLM - Продвинутая)
+    max_new_tokens: 2048
+    context_length: 4096
+    precision: fp16
+    trust_remote_code: true
+    container_name: microsoft-phi-3-5-vision-instruct-vllm
+    compose_service: phi35-vision
+    port: 8002
+    display_name: "Phi-3.5 Vision (Продвинутая)"
+    memory_gb: 8.0
+    startup_time: 150
+    description: "Продвинутая модель Microsoft для сложных задач"
 
 # Совместимость со старой конфигурацией
 models:
-  # dots_ocr: # Отключено в Transformers - используйте vLLM режим
-  #   attn_implementation: eager
-  #   context_length: 2048
-  #   device_map: auto
-  #   load_in_4bit: false
-  #   load_in_8bit: false
-  #   max_new_tokens: 1024
-  #   model_path: rednote-hilab/dots.ocr
-  #   name: dots.ocr (Отключено - используйте vLLM)
-  #   precision: fp16
-  #   torch_dtype: float16
-  #   trust_remote_code: true
-  #   use_flash_attention: false
   qwen3_vl_2b:
     attn_implementation: eager
     context_length: 4096
