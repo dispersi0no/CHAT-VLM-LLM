@@ -12,7 +12,7 @@ from typing import Dict, Optional
 import yaml
 
 from models.base_model import BaseModel
-from models.dots_ocr_final import DotsOCRFinalModel
+from models.dots_ocr import DotsOCRModel
 from models.got_ocr import GOTOCRModel
 from models.qwen3_vl import Qwen3VLModel
 from models.qwen_vl import QwenVLModel
@@ -44,8 +44,8 @@ class ModelLoader:
         "got_ocr": GOTOCRModel,
         "qwen_vl_2b": QwenVLModel,
         "qwen3_vl_2b": Qwen3VLModel,
-        "dots_ocr": DotsOCRFinalModel,
-        "dots_ocr_final": DotsOCRFinalModel,
+        "dots_ocr": DotsOCRModel,
+        "dots_ocr_final": DotsOCRModel,
     }
 
     # Cache for loaded model instances
