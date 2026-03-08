@@ -30,10 +30,7 @@ def get_vram_requirements():
     return {
         "got_ocr": {"fp16": 3.0, "int8": 2.0, "min": 4.0},
         "qwen_vl_2b": {"fp16": 4.7, "bf16": 4.7, "int8": 3.6, "min": 6.0},
-        "qwen_vl_7b": {"fp16": 16.1, "bf16": 16.1, "int8": 10.1, "min": 12.0},
         "qwen3_vl_2b": {"fp16": 4.4, "bf16": 4.4, "int8": 2.2, "min": 6.0},
-        "qwen3_vl_4b": {"fp16": 8.9, "bf16": 8.9, "int8": 3.8, "int4": 3.0, "min": 10.0},
-        "qwen3_vl_8b": {"fp16": 17.6, "bf16": 17.6, "int8": 10.0, "int4": 6.0, "min": 18.0},
         "dots_ocr": {"fp16": 8.0, "bf16": 8.0, "int8": 6.0, "min": 8.0}
     }
 

@@ -4,7 +4,8 @@ from models.base_model import BaseModel
 from models.got_ocr import GOTOCRModel
 from models.qwen_vl import QwenVLModel
 from models.qwen3_vl import Qwen3VLModel
-from models.dots_ocr import DotsOCRModel
+from models.dots_ocr_final import DotsOCRFinalModel
+from models.dots_ocr import DotsOCRModel  # alias for DotsOCRFinalModel
 from models.model_loader import ModelLoader
 
 __all__ = [
@@ -12,6 +13,7 @@ __all__ = [
     "GOTOCRModel",
     "QwenVLModel",
     "Qwen3VLModel",
+    "DotsOCRFinalModel",
     "DotsOCRModel",
     "ModelLoader",
 ]

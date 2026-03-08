@@ -23,6 +23,7 @@ class BaseModel(ABC):
         self.config = config
         self.model_path = config.get('model_path', '')
         self.model_id = self.model_path  # Alias for compatibility
+        self.model_name = config.get('name', self.model_path)  # Human-readable name
         self.precision = config.get('precision', 'fp16')
         self.device_map = config.get('device_map', 'auto')
         self.model = None
@@ -173,7 +174,7 @@ class BaseModel(ABC):
             "loaded": self.model is not None
         }
     
-    def unload_model(self) -> None:
+    def unload(self) -> None:
         """Unload model from memory."""
         if self.model is not None:
             del self.model

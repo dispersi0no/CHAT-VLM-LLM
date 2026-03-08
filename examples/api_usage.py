@@ -107,7 +107,7 @@ def batch_ocr(image_paths, model="qwen3_vl_2b"):
         print(f"Error: {response.status_code}")
         return None
 
-def compare_models(image_path, models=["qwen3_vl_2b", "qwen3_vl_4b"]):
+def compare_models(image_path, models=["qwen3_vl_2b", "dots_ocr"]):
     """Compare different models on the same image."""
     print(f"\nComparing models on {image_path}:")
     
@@ -158,13 +158,13 @@ if __name__ == "__main__":
         chat_result = chat_with_image(
             image_path,
             prompt="What is the main content of this document?",
-            model="qwen3_vl_4b"
+            model="qwen3_vl_2b"
         )
         
         # 6. Compare models
         comparison = compare_models(
             image_path,
-            models=["qwen3_vl_2b", "qwen3_vl_4b"]
+            models=["qwen3_vl_2b", "dots_ocr"]
         )
     else:
         print(f"\nImage not found: {image_path}")
@@ -176,4 +176,4 @@ if __name__ == "__main__":
     #     batch_result = batch_ocr(batch_images, model="qwen3_vl_2b")
     
     # 8. Unload model
-    # unload_model("qwen3_vl_8b")
+    # unload_model("qwen3_vl_2b")

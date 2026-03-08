@@ -33,7 +33,6 @@ class Phi3VisionModel(BaseModel):
     def load_model(self) -> None:
         """Load Phi-3.5 Vision model."""
         try:
-            from utils.logger import logger
             logger.info(f"Loading Phi-3.5 Vision from {self.model_path}")
             
             from transformers import AutoModelForCausalLM, AutoProcessor
@@ -120,7 +119,6 @@ class Phi3VisionModel(BaseModel):
             logger.info("Phi-3.5 Vision loaded successfully")
             
         except Exception as e:
-            from utils.logger import logger
             logger.error(f"Failed to load Phi-3.5 Vision: {e}")
             raise
     

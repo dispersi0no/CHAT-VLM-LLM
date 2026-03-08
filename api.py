@@ -265,15 +265,8 @@ async def list_models():
         "available": [
             {"id": "got_ocr", "name": "GOT-OCR 2.0", "params": "580M", "vram_fp16": "3GB"},
             {"id": "qwen_vl_2b", "name": "Qwen2-VL 2B", "params": "2B", "vram_fp16": "4.7GB"},
-            {"id": "qwen_vl_7b", "name": "Qwen2-VL 7B", "params": "7B", "vram_fp16": "16.1GB"},
             {"id": "qwen3_vl_2b", "name": "Qwen3-VL 2B", "params": "2B", "vram_fp16": "4.4GB"},
-            {"id": "qwen3_vl_4b", "name": "Qwen3-VL 4B", "params": "4B", "vram_fp16": "8.9GB"},
-            {"id": "qwen3_vl_8b", "name": "Qwen3-VL 8B", "params": "8B", "vram_fp16": "17.6GB"},
             {"id": "dots_ocr", "name": "dots.ocr", "params": "1.7B", "vram_bf16": "8GB"},
-            {"id": "phi3_vision", "name": "Phi-3.5 Vision", "params": "4.2B", "vram_fp16": "7.7GB"},
-            {"id": "got_ocr_ucas", "name": "GOT-OCR 2.0 (UCAS)", "params": "580M", "vram_fp16": "2.7GB"},
-            {"id": "got_ocr_hf", "name": "GOT-OCR 2.0 (HF)", "params": "580M", "vram_fp16": "1.1GB"},
-            {"id": "deepseek_ocr", "name": "DeepSeek OCR", "params": "~1B", "vram_fp16": "0.01GB"}
         ],
         "loaded": list(model_cache.keys())
     }
