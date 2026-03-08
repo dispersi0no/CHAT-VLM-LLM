@@ -26,8 +26,6 @@ class Qwen3VLModel(BaseModel):
 
     def __init__(self, config: Dict[str, Any]):
         super().__init__(config)
-        self.model = None
-        self.processor = None
 
         # Qwen3-VL specific settings
         self.min_pixels = config.get("min_pixels", 256)
@@ -262,15 +260,3 @@ class Qwen3VLModel(BaseModel):
         """
         prompt = f"{question}\n\nThink step by step and provide detailed reasoning."
         return self.process_image(image, prompt, max_new_tokens=1024)
-
-    def unload(self) -> None:
-        """Unload model from memory."""
-        if self.model is not None:
-            del self.model
-            self.model = None
-        if self.processor is not None:
-            del self.processor
-            self.processor = None
-        if torch.cuda.is_available():
-            torch.cuda.empty_cache()
-        logger.info("Qwen3-VL unloaded")
