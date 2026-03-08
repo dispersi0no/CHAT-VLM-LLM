@@ -1,22 +1,25 @@
 """Chat page for ChatVLMLLM Streamlit application."""
 
+import gc
 import re
 import time
-import gc
+
 import streamlit as st
 from PIL import Image
-from ui.message_renderer import render_message_with_json_and_html_tables
-from ui.bbox_display import display_bbox_visualization_improved
 
+from ui.bbox_display import display_bbox_visualization_improved
+from ui.message_renderer import render_message_with_json_and_html_tables
 
 # ---------------------------------------------------------------------------
 # Helper functions — shared processing logic (eliminates 3x duplication)
 # ---------------------------------------------------------------------------
 
+
 def _cleanup_gpu():
     """Clean GPU memory and run garbage collection."""
     try:
         import torch
+
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
             torch.cuda.synchronize()
@@ -28,6 +31,7 @@ def _cleanup_gpu():
 def _get_vllm_adapter():
     """Get or create the vLLM adapter singleton in session state."""
     from vllm_streamlit_adapter import VLLMStreamlitAdapter
+
     if "vllm_adapter" not in st.session_state:
         st.session_state.vllm_adapter = VLLMStreamlitAdapter()
     return st.session_state.vllm_adapter
@@ -54,27 +58,56 @@ def _adapt_dots_response(prompt: str, ocr_text: str) -> str:
     """Adapt raw dots.ocr output based on the user's question type."""
     pl = prompt.lower()
 
-    if any(w in pl for w in ('текст', 'прочитай', 'извлеки', 'распознай',
-                              'text', 'extract', 'read')):
+    if any(
+        w in pl
+        for w in (
+            "текст",
+            "прочитай",
+            "извлеки",
+            "распознай",
+            "text",
+            "extract",
+            "read",
+        )
+    ):
         return ocr_text
 
-    if any(w in pl for w in ('что', 'какой', 'сколько', 'есть ли', 'найди',
-                              'what', 'how', 'is there', 'find')):
-        if 'число' in pl or 'number' in pl:
-            nums = re.findall(r'\d+', ocr_text)
-            return (f"В изображении найдены числа: {', '.join(nums)}"
-                    if nums else "В изображении не найдено чисел.")
-        if 'цвет' in pl or 'color' in pl:
-            return ("dots.ocr специализирована на распознавании текста, "
-                    "а не анализе цветов. Для анализа изображений "
-                    "используйте Qwen3-VL.")
-        if 'сколько' in pl or 'how many' in pl:
+    if any(
+        w in pl
+        for w in (
+            "что",
+            "какой",
+            "сколько",
+            "есть ли",
+            "найди",
+            "what",
+            "how",
+            "is there",
+            "find",
+        )
+    ):
+        if "число" in pl or "number" in pl:
+            nums = re.findall(r"\d+", ocr_text)
+            return (
+                f"В изображении найдены числа: {', '.join(nums)}"
+                if nums
+                else "В изображении не найдено чисел."
+            )
+        if "цвет" in pl or "color" in pl:
+            return (
+                "dots.ocr специализирована на распознавании текста, "
+                "а не анализе цветов. Для анализа изображений "
+                "используйте Qwen3-VL."
+            )
+        if "сколько" in pl or "how many" in pl:
             return f"В тексте примерно {len(ocr_text.split())} слов."
-        if 'есть ли' in pl or 'is there' in pl:
-            if 'текст' in pl or 'text' in pl:
+        if "есть ли" in pl or "is there" in pl:
+            if "текст" in pl or "text" in pl:
                 return f"Да, в изображении есть текст:\n\n{ocr_text}"
-            return ("dots.ocr может определить только наличие текста. "
-                    f"Найденный текст:\n\n{ocr_text}")
+            return (
+                "dots.ocr может определить только наличие текста. "
+                f"Найденный текст:\n\n{ocr_text}"
+            )
         return (
             "dots.ocr специализирована на OCR. Вот распознанный текст, "
             "который может помочь ответить на ваш вопрос:\n\n"
@@ -91,18 +124,28 @@ def _adapt_dots_response(prompt: str, ocr_text: str) -> str:
     )
 
 
-def _process_via_transformers(image, prompt: str, selected_model: str,
-                              max_tokens: int, temperature: float,
-                              start_time: float) -> str:
+def _process_via_transformers(
+    image,
+    prompt: str,
+    selected_model: str,
+    max_tokens: int,
+    temperature: float,
+    start_time: float,
+) -> str:
     """Run inference through Transformers and return the response string."""
     from models.model_loader import ModelLoader
+
     model = ModelLoader.load_model(selected_model)
 
-    if hasattr(model, 'chat'):
-        resp = model.chat(image=image, prompt=prompt,
-                          temperature=temperature, max_new_tokens=max_tokens)
-    elif hasattr(model, 'process_image'):
-        if any(w in prompt.lower() for w in ('текст', 'прочитай', 'извлеки')):
+    if hasattr(model, "chat"):
+        resp = model.chat(
+            image=image,
+            prompt=prompt,
+            temperature=temperature,
+            max_new_tokens=max_tokens,
+        )
+    elif hasattr(model, "process_image"):
+        if any(w in prompt.lower() for w in ("текст", "прочитай", "извлеки")):
             resp = model.process_image(image)
         else:
             resp = f"Это OCR модель. Извлеченный текст:\n\n{model.process_image(image)}"
@@ -117,17 +160,23 @@ def _handle_error(error) -> str:
     """Return a user-friendly error string and show UI warnings."""
     msg = str(error)
     if "CUDA error" in msg or "device-side assert" in msg:
-        st.error("❌ Ошибка GPU. Попробуйте перезагрузить страницу "
-                 "или выбрать другую модель.")
-        st.info("💡 Рекомендация: Используйте vLLM режим "
-                "для более стабильной работы.")
-        return ("❌ Критическая ошибка GPU. Перезагрузите страницу "
-                "и попробуйте vLLM режим.")
+        st.error(
+            "❌ Ошибка GPU. Попробуйте перезагрузить страницу "
+            "или выбрать другую модель."
+        )
+        st.info(
+            "💡 Рекомендация: Используйте vLLM режим " "для более стабильной работы."
+        )
+        return (
+            "❌ Критическая ошибка GPU. Перезагрузите страницу "
+            "и попробуйте vLLM режим."
+        )
     if "video_processor" in msg or "NoneType" in msg:
-        st.error("❌ Ошибка загрузки dots.ocr. "
-                 "Попробуйте использовать Qwen3-VL.")
-        return ("❌ Ошибка загрузки модели dots.ocr. "
-                "Используйте Qwen3-VL для аналогичных задач.")
+        st.error("❌ Ошибка загрузки dots.ocr. " "Попробуйте использовать Qwen3-VL.")
+        return (
+            "❌ Ошибка загрузки модели dots.ocr. "
+            "Используйте Qwen3-VL для аналогичных задач."
+        )
     return (
         f"❌ Ошибка при обработке: {msg}\n\n"
         "💡 Попробуйте выбрать другую модель или проверьте, "
@@ -141,8 +190,7 @@ def _is_critical_error(error) -> bool:
     return "CUDA error" in msg or "device-side assert" in msg
 
 
-def process_prompt(image, prompt: str, execution_mode: str,
-                   selected_model: str) -> str:
+def process_prompt(image, prompt: str, execution_mode: str, selected_model: str) -> str:
     """
     Unified prompt processing pipeline.
 
@@ -151,8 +199,8 @@ def process_prompt(image, prompt: str, execution_mode: str,
     """
     _cleanup_gpu()
     start_time = time.time()
-    max_tokens = st.session_state.get('max_tokens', 4096)
-    temperature = st.session_state.get('temperature', 0.7)
+    max_tokens = st.session_state.get("max_tokens", 4096)
+    temperature = st.session_state.get("temperature", 0.7)
 
     try:
         if "vLLM" in execution_mode:
@@ -183,40 +231,47 @@ def process_prompt(image, prompt: str, execution_mode: str,
                 st.info("💡 Переключаемся на Transformers режим...")
                 try:
                     return _process_via_transformers(
-                        image, prompt, selected_model,
-                        max_tokens, temperature, start_time
+                        image,
+                        prompt,
+                        selected_model,
+                        max_tokens,
+                        temperature,
+                        start_time,
                     )
                 except Exception as fb:
                     return f"❌ Ошибка и в fallback режиме: {str(fb)}"
         else:
             return _process_via_transformers(
-                image, prompt, selected_model,
-                max_tokens, temperature, start_time
+                image, prompt, selected_model, max_tokens, temperature, start_time
             )
     except Exception as e:
         return _handle_error(e)
 
 
-def process_official_prompt(image, prompt: str, execution_mode: str,
-                            selected_model: str) -> str:
+def process_official_prompt(
+    image, prompt: str, execution_mode: str, selected_model: str
+) -> str:
     """Process an official dots.ocr prompt (with model unload + Qwen3-VL fallback)."""
     _cleanup_gpu()
     try:
         from models.model_loader import ModelLoader
+
         ModelLoader.unload_all_models()
     except Exception:
         pass
 
     start_time = time.time()
-    max_tokens = st.session_state.get('max_tokens', 4096)
+    max_tokens = st.session_state.get("max_tokens", 4096)
 
     try:
         if "vLLM" in execution_mode:
             adapter = _get_vllm_adapter()
             model_max = adapter.get_model_max_tokens("rednote-hilab/dots.ocr")
             safe = _safe_max_tokens(adapter, "rednote-hilab/dots.ocr", max_tokens)
-            st.info(f"🎯 Используем {safe} токенов для официального "
-                    f"промпта (лимит модели: {model_max})")
+            st.info(
+                f"🎯 Используем {safe} токенов для официального "
+                f"промпта (лимит модели: {model_max})"
+            )
 
             try:
                 result = adapter.process_image(
@@ -230,9 +285,9 @@ def process_official_prompt(image, prompt: str, execution_mode: str,
                         image, prompt, "Qwen/Qwen3-VL-2B-Instruct", max_tokens
                     )
                     if result and result["success"]:
-                        result["text"] += (
-                            "\n\n*⚠️ Обработано через Qwen3-VL (fallback)*"
-                        )
+                        result[
+                            "text"
+                        ] += "\n\n*⚠️ Обработано через Qwen3-VL (fallback)*"
                 except Exception:
                     result = {"success": False, "text": "Ошибка обработки"}
 
@@ -353,9 +408,12 @@ def _render_dots_prompts(image, execution_mode: str, selected_model: str):
     st.caption("Используйте эти промпты для лучших результатов с dots.ocr")
 
     for button_text, prompt_info in _OFFICIAL_PROMPTS.items():
-        if st.button(button_text, help=prompt_info["description"],
-                     use_container_width=True,
-                     key=f"official_prompt_{button_text}"):
+        if st.button(
+            button_text,
+            help=prompt_info["description"],
+            use_container_width=True,
+            key=f"official_prompt_{button_text}",
+        ):
             official_prompt = prompt_info["prompt"]
             st.session_state.messages.append(
                 {"role": "user", "content": official_prompt}
@@ -374,13 +432,10 @@ def _render_dots_prompts(image, execution_mode: str, selected_model: str):
                         "image": image,
                         "processing_time": 0,
                     }
-                    st.success(
-                        f"✅ Официальный промпт '{button_text}' выполнен!"
-                    )
+                    st.success(f"✅ Официальный промпт '{button_text}' выполнен!")
                 else:
                     st.warning(
-                        f"⚠️ Официальный промпт '{button_text}' "
-                        "выполнен с ошибками"
+                        f"⚠️ Официальный промпт '{button_text}' " "выполнен с ошибками"
                     )
 
                 st.session_state.messages.append(
@@ -408,8 +463,7 @@ def _render_chat_examples():
     st.caption("Попробуйте эти вопросы для интерактивного чата")
 
     for example in _CHAT_EXAMPLES:
-        if st.button(example, use_container_width=True,
-                     key=f"chat_example_{example}"):
+        if st.button(example, use_container_width=True, key=f"chat_example_{example}"):
             st.session_state.example_prompt = example.split(" ", 1)[1]
             st.rerun()
 
@@ -426,15 +480,12 @@ def _handle_example_prompt(image, execution_mode: str, selected_model: str):
 
         with st.spinner("🤔 Думаю..."):
             if image is not None:
-                response = process_prompt(
-                    image, prompt, execution_mode, selected_model
-                )
+                response = process_prompt(image, prompt, execution_mode, selected_model)
             else:
-                response = ("❌ Изображение не загружено. "
-                            "Пожалуйста, загрузите изображение.")
-            st.session_state.messages.append(
-                {"role": "assistant", "content": response}
-            )
+                response = (
+                    "❌ Изображение не загружено. " "Пожалуйста, загрузите изображение."
+                )
+            st.session_state.messages.append({"role": "assistant", "content": response})
         st.rerun()
 
     if st.button("❌ Отменить", key="cancel_example"):
@@ -454,8 +505,7 @@ def show_chat(config: dict, execution_mode: str, selected_model: str) -> None:
         chat_image = st.file_uploader(
             "Изображение для контекста чата",
             type=config.get("ocr", {}).get(
-                "supported_formats",
-                ["jpg", "jpeg", "png", "bmp", "tiff"]
+                "supported_formats", ["jpg", "jpeg", "png", "bmp", "tiff"]
             ),
             key="chat_upload",
         )
@@ -464,16 +514,14 @@ def show_chat(config: dict, execution_mode: str, selected_model: str) -> None:
         if chat_image:
             image = Image.open(chat_image)
             st.session_state.uploaded_image = image
-            st.image(image, caption="Контекстное изображение",
-                     use_container_width=True)
+            st.image(image, caption="Контекстное изображение", use_container_width=True)
 
             if "dots" in selected_model.lower():
                 _render_dots_prompts(image, execution_mode, selected_model)
             else:
                 _render_chat_examples()
 
-            if st.button("🗑️ Очистить историю чата",
-                         use_container_width=True):
+            if st.button("🗑️ Очистить историю чата", use_container_width=True):
                 st.session_state.messages = []
                 st.rerun()
 
@@ -483,18 +531,16 @@ def show_chat(config: dict, execution_mode: str, selected_model: str) -> None:
         chat_container = st.container(height=400)
         with chat_container:
             if not st.session_state.messages:
-                st.info(
-                    "👋 Загрузите изображение и начните "
-                    "задавать вопросы о нем!"
-                )
+                st.info("👋 Загрузите изображение и начните " "задавать вопросы о нем!")
 
             for message in st.session_state.messages:
                 with st.chat_message(message["role"]):
                     render_message_with_json_and_html_tables(
                         message["content"], message["role"]
                     )
-                    if (message["role"] == "assistant"
-                            and hasattr(st.session_state, 'last_ocr_result')):
+                    if message["role"] == "assistant" and hasattr(
+                        st.session_state, "last_ocr_result"
+                    ):
                         display_bbox_visualization_improved(
                             st.session_state.last_ocr_result
                         )
@@ -506,18 +552,16 @@ def show_chat(config: dict, execution_mode: str, selected_model: str) -> None:
         )
 
         # Handle pending example prompt
-        if hasattr(st.session_state, 'example_prompt'):
+        if hasattr(st.session_state, "example_prompt"):
             _handle_example_prompt(
-                image or st.session_state.get('uploaded_image'),
+                image or st.session_state.get("uploaded_image"),
                 execution_mode,
                 selected_model,
             )
 
         # Main chat input
         if prompt := st.chat_input(placeholder, disabled=not chat_image):
-            st.session_state.messages.append(
-                {"role": "user", "content": prompt}
-            )
+            st.session_state.messages.append({"role": "user", "content": prompt})
             with st.chat_message("user"):
                 st.markdown(prompt)
 
@@ -526,11 +570,7 @@ def show_chat(config: dict, execution_mode: str, selected_model: str) -> None:
                     response = process_prompt(
                         image, prompt, execution_mode, selected_model
                     )
-                    render_message_with_json_and_html_tables(
-                        response, "assistant"
-                    )
+                    render_message_with_json_and_html_tables(response, "assistant")
 
-            st.session_state.messages.append(
-                {"role": "assistant", "content": response}
-            )
+            st.session_state.messages.append({"role": "assistant", "content": response})
             st.rerun()

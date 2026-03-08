@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Check if the environment is properly set up."""
 
-import sys
-import subprocess
-from pathlib import Path
 import importlib.util
+import subprocess
+import sys
+from pathlib import Path
 
 
 def check_python_version():
@@ -14,7 +14,9 @@ def check_python_version():
         print(f"✅ Python {version.major}.{version.minor}.{version.micro}")
         return True
     else:
-        print(f"❌ Python {version.major}.{version.minor}.{version.micro} (3.10+ required)")
+        print(
+            f"❌ Python {version.major}.{version.minor}.{version.micro} (3.10+ required)"
+        )
         return False
 
 
@@ -33,8 +35,11 @@ def check_cuda():
     """Check CUDA availability."""
     try:
         import torch
+
         if torch.cuda.is_available():
-            print(f"✅ CUDA {torch.version.cuda} (GPU: {torch.cuda.get_device_name(0)})")
+            print(
+                f"✅ CUDA {torch.version.cuda} (GPU: {torch.cuda.get_device_name(0)})"
+            )
             return True
         else:
             print("⚠️  CUDA not available (CPU mode will be used)")
@@ -46,16 +51,8 @@ def check_cuda():
 
 def check_directories():
     """Check if required directories exist."""
-    required_dirs = [
-        "models",
-        "utils",
-        "ui",
-        "tests",
-        "examples",
-        "logs",
-        "results"
-    ]
-    
+    required_dirs = ["models", "utils", "ui", "tests", "examples", "logs", "results"]
+
     all_exist = True
     for dir_name in required_dirs:
         path = Path(dir_name)
@@ -65,18 +62,14 @@ def check_directories():
             print(f"⚠️  {dir_name}/ (creating...)")
             path.mkdir(exist_ok=True)
             all_exist = False
-    
+
     return all_exist
 
 
 def check_config_files():
     """Check if configuration files exist."""
-    config_files = [
-        "config.yaml",
-        "requirements.txt",
-        ".env.example"
-    ]
-    
+    config_files = ["config.yaml", "requirements.txt", ".env.example"]
+
     all_exist = True
     for file_name in config_files:
         path = Path(file_name)
@@ -85,23 +78,23 @@ def check_config_files():
         else:
             print(f"❌ {file_name}")
             all_exist = False
-    
+
     return all_exist
 
 
 def main():
     """Main check function."""
-    print("\n" + "="*50)
+    print("\n" + "=" * 50)
     print("ChatVLMLLM Environment Check")
-    print("="*50 + "\n")
-    
+    print("=" * 50 + "\n")
+
     checks = []
-    
+
     # Python version
     print("[1/5] Python Version")
     checks.append(check_python_version())
     print()
-    
+
     # Required packages
     print("[2/5] Required Packages")
     required_packages = [
@@ -110,29 +103,29 @@ def main():
         "transformers",
         "pillow",
         "numpy",
-        "yaml"
+        "yaml",
     ]
     package_checks = [check_package(pkg) for pkg in required_packages]
     checks.append(all(package_checks))
     print()
-    
+
     # CUDA
     print("[3/5] CUDA Support")
     check_cuda()
     print()
-    
+
     # Directories
     print("[4/5] Project Directories")
     checks.append(check_directories())
     print()
-    
+
     # Config files
     print("[5/5] Configuration Files")
     checks.append(check_config_files())
     print()
-    
+
     # Summary
-    print("="*50)
+    print("=" * 50)
     if all(checks):
         print("✅ Environment is ready!")
         print("\nRun: streamlit run app.py")

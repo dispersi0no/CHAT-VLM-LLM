@@ -11,17 +11,27 @@ REST API для Vision-Language Models OCR и чата.
 Документация: http://localhost:8001/docs
 """
 
-from fastapi import FastAPI, UploadFile, File, HTTPException, Request, Depends, Query, Form
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field
-from typing import List, Optional, Dict, Any
-from PIL import Image
-from collections import defaultdict
 import io
-import time
 import logging
 import os
+import time
+from collections import defaultdict
+from typing import Any, Dict, List, Optional
+
+from fastapi import (
+    Depends,
+    FastAPI,
+    File,
+    Form,
+    HTTPException,
+    Query,
+    Request,
+    UploadFile,
+)
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from PIL import Image
+from pydantic import BaseModel, Field
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -31,33 +41,42 @@ logger = logging.getLogger(__name__)
 # Конфигурация безопасности
 # =============================================================================
 
+
 class SecurityConfig:
     """Настройки безопасности API."""
-    
+
     # CORS настройки
     CORS_ORIGINS: List[str] = os.getenv(
-        "CORS_ORIGINS", 
-        "http://localhost:8501,http://localhost:3000,http://127.0.0.1:8501"
+        "CORS_ORIGINS",
+        "http://localhost:8501,http://localhost:3000,http://127.0.0.1:8501",
     ).split(",")
-    
+
     # Rate limiting (запросов в минуту)
     RATE_LIMIT_PER_MINUTE: int = int(os.getenv("RATE_LIMIT", "60"))
-    
+
     # Ограничения файлов
     MAX_FILE_SIZE: int = 10 * 1024 * 1024  # 10 MB
     MAX_BATCH_SIZE: int = 10  # Максимум файлов в пакете
-    
+
     # Разрешённые MIME-типы
     ALLOWED_MIME_TYPES: List[str] = [
         "image/jpeg",
-        "image/png", 
+        "image/png",
         "image/bmp",
         "image/tiff",
-        "image/webp"
+        "image/webp",
     ]
-    
+
     # Разрешённые расширения
-    ALLOWED_EXTENSIONS: List[str] = [".jpg", ".jpeg", ".png", ".bmp", ".tiff", ".tif", ".webp"]
+    ALLOWED_EXTENSIONS: List[str] = [
+        ".jpg",
+        ".jpeg",
+        ".png",
+        ".bmp",
+        ".tiff",
+        ".tif",
+        ".webp",
+    ]
 
 
 security_config = SecurityConfig()
@@ -67,20 +86,21 @@ security_config = SecurityConfig()
 # Rate Limiting
 # =============================================================================
 
+
 class RateLimiter:
     """Простой rate limiter на основе IP.
 
     Примечание: безопасен только при запуске с 1 воркером (--workers 1).
     Состояние хранится в памяти процесса и не разделяется между воркерами.
     """
-    
+
     _CLEANUP_INTERVAL: int = 300  # 5 минут
 
     def __init__(self, requests_per_minute: int = 60):
         self.requests_per_minute = requests_per_minute
         self.requests: Dict[str, List[float]] = defaultdict(list)
         self._last_cleanup: float = time.time()
-    
+
     def _maybe_cleanup(self) -> None:
         """Периодически удалять IP-записи без недавней активности."""
         now = time.time()
@@ -88,7 +108,8 @@ class RateLimiter:
             return
         minute_ago = now - 60
         stale_keys = [
-            ip for ip, timestamps in self.requests.items()
+            ip
+            for ip, timestamps in self.requests.items()
             if not any(t > minute_ago for t in timestamps)
         ]
         for ip in stale_keys:
@@ -99,23 +120,23 @@ class RateLimiter:
         """Проверка, разрешён ли запрос."""
         now = time.time()
         minute_ago = now - 60
-        
+
         # Очистка старых записей текущего IP
         self.requests[client_ip] = [
             t for t in self.requests[client_ip] if t > minute_ago
         ]
-        
+
         # Проверка лимита
         if len(self.requests[client_ip]) >= self.requests_per_minute:
             return False
-        
+
         # Запись нового запроса
         self.requests[client_ip].append(now)
 
         # Периодическая очистка устаревших IP-записей
         self._maybe_cleanup()
         return True
-    
+
     def get_remaining(self, client_ip: str) -> int:
         """Получение оставшихся запросов."""
         now = time.time()
@@ -131,14 +152,15 @@ rate_limiter = RateLimiter(security_config.RATE_LIMIT_PER_MINUTE)
 # Валидация файлов
 # =============================================================================
 
+
 def validate_file(file: UploadFile, content: bytes) -> None:
     """
     Валидация загруженного файла.
-    
+
     Args:
         file: Объект загруженного файла
         content: Содержимое файла
-        
+
     Raises:
         HTTPException: При ошибке валидации
     """
@@ -146,18 +168,18 @@ def validate_file(file: UploadFile, content: bytes) -> None:
     if len(content) > security_config.MAX_FILE_SIZE:
         raise HTTPException(
             status_code=413,
-            detail=f"Файл слишком большой. Максимум: {security_config.MAX_FILE_SIZE // 1024 // 1024} MB"
+            detail=f"Файл слишком большой. Максимум: {security_config.MAX_FILE_SIZE // 1024 // 1024} MB",
         )
-    
+
     # Проверка расширения
     if file.filename:
         ext = os.path.splitext(file.filename.lower())[1]
         if ext not in security_config.ALLOWED_EXTENSIONS:
             raise HTTPException(
                 status_code=400,
-                detail=f"Недопустимое расширение файла. Разрешены: {', '.join(security_config.ALLOWED_EXTENSIONS)}"
+                detail=f"Недопустимое расширение файла. Разрешены: {', '.join(security_config.ALLOWED_EXTENSIONS)}",
             )
-    
+
     # Проверка MIME-типа через PIL (надёжная проверка по содержимому)
     # Проверка, что файл является валидным изображением
     try:
@@ -166,21 +188,20 @@ def validate_file(file: UploadFile, content: bytes) -> None:
         image = Image.open(io.BytesIO(content))
     except Exception as e:
         raise HTTPException(
-            status_code=400,
-            detail=f"Файл не является валидным изображением: {str(e)}"
+            status_code=400, detail=f"Файл не является валидным изображением: {str(e)}"
         )
 
 
 async def rate_limit_check(request: Request):
     """Зависимость для проверки rate limit."""
     client_ip = request.client.host if request.client else "unknown"
-    
+
     if not rate_limiter.is_allowed(client_ip):
         remaining = rate_limiter.get_remaining(client_ip)
         raise HTTPException(
             status_code=429,
             detail=f"Превышен лимит запросов. Попробуйте через минуту.",
-            headers={"X-RateLimit-Remaining": str(remaining)}
+            headers={"X-RateLimit-Remaining": str(remaining)},
         )
 
 
@@ -193,7 +214,7 @@ app = FastAPI(
     description="REST API для Vision-Language Models OCR и чата",
     version="1.0.0",
     docs_url="/docs",
-    redoc_url="/redoc"
+    redoc_url="/redoc",
 )
 
 # CORS с настраиваемыми origins
@@ -203,7 +224,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["GET", "POST", "DELETE"],
     allow_headers=["*"],
-    expose_headers=["X-RateLimit-Remaining"]
+    expose_headers=["X-RateLimit-Remaining"],
 )
 
 
@@ -216,18 +237,22 @@ def get_model(model_name: str):
     if model_name not in model_cache:
         try:
             from models import ModelLoader
+
             logger.info(f"Загрузка модели: {model_name}")
             model_cache[model_name] = ModelLoader.load_model(model_name)
             logger.info(f"Модель загружена успешно: {model_name}")
         except Exception as e:
             logger.error(f"Ошибка загрузки модели {model_name}: {e}")
-            raise HTTPException(status_code=500, detail=f"Ошибка загрузки модели: {str(e)}")
+            raise HTTPException(
+                status_code=500, detail=f"Ошибка загрузки модели: {str(e)}"
+            )
     return model_cache[model_name]
 
 
 # =============================================================================
 # Эндпоинты
 # =============================================================================
+
 
 @app.get("/")
 async def root():
@@ -236,7 +261,7 @@ async def root():
         "message": "ChatVLMLLM API",
         "version": "1.0.0",
         "docs": "/docs",
-        "health": "/health"
+        "health": "/health",
     }
 
 
@@ -245,19 +270,22 @@ async def health_check():
     """Проверка здоровья сервиса и статуса GPU."""
     try:
         import torch
+
         gpu_available = torch.cuda.is_available()
         gpu_name = torch.cuda.get_device_name(0) if gpu_available else None
         vram_total = None
         vram_used = None
         if gpu_available:
-            vram_total = round(torch.cuda.get_device_properties(0).total_memory / 1e9, 2)
+            vram_total = round(
+                torch.cuda.get_device_properties(0).total_memory / 1e9, 2
+            )
             vram_used = round(torch.cuda.memory_allocated(0) / 1e9, 2)
     except:
         gpu_available = False
         gpu_name = None
         vram_total = None
         vram_used = None
-    
+
     return {
         "status": "healthy",
         "gpu_available": gpu_available,
@@ -266,7 +294,7 @@ async def health_check():
         "vram_used_gb": vram_used,
         "models_loaded": len(model_cache),
         "loaded_models": list(model_cache.keys()),
-        "rate_limit_per_minute": security_config.RATE_LIMIT_PER_MINUTE
+        "rate_limit_per_minute": security_config.RATE_LIMIT_PER_MINUTE,
     }
 
 
@@ -274,9 +302,10 @@ async def health_check():
 async def list_models():
     """Список доступных моделей."""
     from models import ModelLoader
+
     return {
         "available": ModelLoader.get_available_models(),
-        "loaded": list(model_cache.keys())
+        "loaded": list(model_cache.keys()),
     }
 
 
@@ -285,53 +314,55 @@ async def extract_text(
     request: Request,
     file: UploadFile = File(...),
     model: str = "qwen3_vl_2b",
-    language: Optional[str] = None
+    language: Optional[str] = None,
 ):
     """
     Извлечение текста из изображения.
-    
+
     Args:
         file: Файл изображения (JPG, PNG, BMP, TIFF)
         model: Модель для использования (по умолчанию: qwen3_vl_2b)
         language: Подсказка языка (опционально)
-    
+
     Returns:
         Извлечённый текст с метаданными
     """
     try:
         image_data = await file.read()
         validate_file(file, image_data)
-        
+
         image = Image.open(io.BytesIO(image_data))
-        if image.mode != 'RGB':
-            image = image.convert('RGB')
-        
+        if image.mode != "RGB":
+            image = image.convert("RGB")
+
         model_instance = get_model(model)
         start_time = time.time()
-        
+
         # Единый dispatch через BaseModel.run()
         if language:
-            ocr_prompt = f"Extract all text from this document. Language hint: {language}"
+            ocr_prompt = (
+                f"Extract all text from this document. Language hint: {language}"
+            )
         else:
             ocr_prompt = "Extract all text from this document."
         text = model_instance.run(image, prompt=ocr_prompt)
-        
+
         processing_time = time.time() - start_time
-        
+
         client_ip = request.client.host if request.client else "unknown"
         remaining = rate_limiter.get_remaining(client_ip)
-        
+
         return JSONResponse(
             content={
                 "text": text,
                 "model": model,
                 "processing_time": round(processing_time, 3),
                 "image_size": list(image.size),
-                "language": language
+                "language": language,
             },
-            headers={"X-RateLimit-Remaining": str(remaining)}
+            headers={"X-RateLimit-Remaining": str(remaining)},
         )
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -346,52 +377,54 @@ async def chat_with_image(
     prompt: str = Form(default="Опишите это изображение"),
     model: str = Form(default="qwen3_vl_2b"),
     temperature: float = Query(default=0.7, ge=0.0, le=1.0),
-    max_tokens: int = Query(default=512, ge=1, le=4096)
+    max_tokens: int = Query(default=512, ge=1, le=4096),
 ):
     """
     Чат с VLM моделью об изображении.
-    
+
     Args:
         file: Файл изображения
         prompt: Вопрос пользователя
         model: Модель для использования
         temperature: Температура сэмплирования (0.0-1.0)
         max_tokens: Максимум токенов для генерации (1-4096)
-    
+
     Returns:
         Ответ модели
     """
     try:
         image_data = await file.read()
         validate_file(file, image_data)
-        
+
         image = Image.open(io.BytesIO(image_data))
-        if image.mode != 'RGB':
-            image = image.convert('RGB')
-        
+        if image.mode != "RGB":
+            image = image.convert("RGB")
+
         prompt = prompt.strip()[:2000]
-        
+
         model_instance = get_model(model)
         start_time = time.time()
-        
+
         # Единый dispatch через BaseModel.run()
-        response = model_instance.run(image, prompt=prompt, temperature=temperature, max_new_tokens=max_tokens)
-        
+        response = model_instance.run(
+            image, prompt=prompt, temperature=temperature, max_new_tokens=max_tokens
+        )
+
         processing_time = time.time() - start_time
-        
+
         client_ip = request.client.host if request.client else "unknown"
         remaining = rate_limiter.get_remaining(client_ip)
-        
+
         return JSONResponse(
             content={
                 "response": response,
                 "model": model,
                 "processing_time": round(processing_time, 3),
-                "prompt": prompt
+                "prompt": prompt,
             },
-            headers={"X-RateLimit-Remaining": str(remaining)}
+            headers={"X-RateLimit-Remaining": str(remaining)},
         )
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -401,79 +434,77 @@ async def chat_with_image(
 
 @app.post("/batch/ocr", dependencies=[Depends(rate_limit_check)])
 async def batch_ocr(
-    request: Request,
-    files: List[UploadFile] = File(...),
-    model: str = "qwen3_vl_2b"
+    request: Request, files: List[UploadFile] = File(...), model: str = "qwen3_vl_2b"
 ):
     """
     Пакетная обработка OCR.
-    
+
     Args:
         files: Список файлов изображений (максимум 10)
         model: Модель для использования
-    
+
     Returns:
         Список результатов
     """
     if len(files) > security_config.MAX_BATCH_SIZE:
         raise HTTPException(
             status_code=400,
-            detail=f"Слишком много файлов. Максимум: {security_config.MAX_BATCH_SIZE}"
+            detail=f"Слишком много файлов. Максимум: {security_config.MAX_BATCH_SIZE}",
         )
-    
+
     results = []
-    
+
     for file in files:
         try:
             image_data = await file.read()
             validate_file(file, image_data)
-            
+
             image = Image.open(io.BytesIO(image_data))
-            if image.mode != 'RGB':
-                image = image.convert('RGB')
-            
+            if image.mode != "RGB":
+                image = image.convert("RGB")
+
             model_instance = get_model(model)
             start_time = time.time()
-            
+
             # Единый dispatch через BaseModel.run()
-            text = model_instance.run(image, prompt="Extract all text from this document.")
-            
+            text = model_instance.run(
+                image, prompt="Extract all text from this document."
+            )
+
             processing_time = time.time() - start_time
-            
-            results.append({
-                "filename": file.filename,
-                "text": text,
-                "processing_time": round(processing_time, 3),
-                "status": "success"
-            })
-            
+
+            results.append(
+                {
+                    "filename": file.filename,
+                    "text": text,
+                    "processing_time": round(processing_time, 3),
+                    "status": "success",
+                }
+            )
+
         except HTTPException as e:
-            results.append({
-                "filename": file.filename,
-                "error": e.detail,
-                "status": "error"
-            })
+            results.append(
+                {"filename": file.filename, "error": e.detail, "status": "error"}
+            )
         except Exception as e:
             logger.error(f"Ошибка пакетной обработки для {file.filename}: {e}")
-            results.append({
-                "filename": file.filename,
-                "error": str(e),
-                "status": "error"
-            })
-    
+            results.append(
+                {"filename": file.filename, "error": str(e), "status": "error"}
+            )
+
     successful = sum(1 for r in results if r["status"] == "success")
-    
+
     client_ip = request.client.host if request.client else "unknown"
     remaining = rate_limiter.get_remaining(client_ip)
-    
+
     return JSONResponse(
         content={
             "results": results,
             "total": len(files),
             "successful": successful,
-            "failed": len(files) - successful
+            "failed": len(files) - successful,
         },
-        headers={"X-RateLimit-Remaining": str(remaining)}
+        headers={"X-RateLimit-Remaining": str(remaining)},
     )
 
 
@@ -483,17 +514,18 @@ async def unload_model(model_name: str):
     if model_name in model_cache:
         try:
             model = model_cache[model_name]
-            if hasattr(model, 'unload'):
+            if hasattr(model, "unload"):
                 model.unload()
             del model_cache[model_name]
-            
+
             try:
                 import torch
+
                 if torch.cuda.is_available():
                     torch.cuda.empty_cache()
             except:
                 pass
-            
+
             logger.info(f"Модель выгружена: {model_name}")
             return {"status": "success", "message": f"Модель {model_name} выгружена"}
         except Exception as e:
@@ -506,12 +538,13 @@ async def unload_model(model_name: str):
 # Обработчики ошибок
 # =============================================================================
 
+
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException):
     """Обработчик HTTP исключений."""
     return JSONResponse(
         status_code=exc.status_code,
-        content={"detail": exc.detail, "status_code": exc.status_code}
+        content={"detail": exc.detail, "status_code": exc.status_code},
     )
 
 
@@ -521,10 +554,11 @@ async def general_exception_handler(request: Request, exc: Exception):
     logger.error(f"Необработанная ошибка: {exc}")
     return JSONResponse(
         status_code=500,
-        content={"detail": "Внутренняя ошибка сервера", "status_code": 500}
+        content={"detail": "Внутренняя ошибка сервера", "status_code": 500},
     )
 
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8000)

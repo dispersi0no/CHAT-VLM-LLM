@@ -1,6 +1,7 @@
 """Home page for ChatVLMLLM Streamlit application."""
 
 import streamlit as st
+
 from ui.components import render_metric_card, render_progress_bar
 
 
@@ -15,31 +16,31 @@ def show_home(config: dict) -> None:
     with col1:
         st.markdown(
             '<div class="feature-card">'
-            '<h3>📄 Режим OCR</h3>'
-            '<p>Извлечение текста и структурированных данных из документов с помощью специализированных VLM моделей.</p>'
+            "<h3>📄 Режим OCR</h3>"
+            "<p>Извлечение текста и структурированных данных из документов с помощью специализированных VLM моделей.</p>"
             '<ul style="text-align: left; margin-top: 1rem;">'
-            '<li>✅ Распознавание текста</li>'
-            '<li>✅ Извлечение полей</li>'
-            '<li>✅ Поддержка множества форматов</li>'
-            '<li>✅ Экспорт в JSON/CSV</li>'
-            '</ul>'
-            '</div>',
-            unsafe_allow_html=True
+            "<li>✅ Распознавание текста</li>"
+            "<li>✅ Извлечение полей</li>"
+            "<li>✅ Поддержка множества форматов</li>"
+            "<li>✅ Экспорт в JSON/CSV</li>"
+            "</ul>"
+            "</div>",
+            unsafe_allow_html=True,
         )
 
     with col2:
         st.markdown(
             '<div class="feature-card">'
-            '<h3>💬 Режим чата</h3>'
-            '<p>Интерактивное общение с VLM моделями о содержимом документов.</p>'
+            "<h3>💬 Режим чата</h3>"
+            "<p>Интерактивное общение с VLM моделями о содержимом документов.</p>"
             '<ul style="text-align: left; margin-top: 1rem;">'
-            '<li>✅ Визуальные вопросы и ответы</li>'
-            '<li>✅ Понимание контекста</li>'
-            '<li>✅ Поддержка Markdown</li>'
-            '<li>✅ История чата</li>'
-            '</ul>'
-            '</div>',
-            unsafe_allow_html=True
+            "<li>✅ Визуальные вопросы и ответы</li>"
+            "<li>✅ Понимание контекста</li>"
+            "<li>✅ Поддержка Markdown</li>"
+            "<li>✅ История чата</li>"
+            "</ul>"
+            "</div>",
+            unsafe_allow_html=True,
         )
 
     st.divider()
@@ -53,6 +54,7 @@ def show_home(config: dict) -> None:
 
     try:
         import torch
+
         gpu_name = torch.cuda.get_device_name(0) if torch.cuda.is_available() else "CPU"
     except Exception:
         gpu_name = "CPU"
@@ -175,4 +177,6 @@ def show_home(config: dict) -> None:
         - **Для парсинга структуры**: dots.ocr - 8ГБ VRAM
         """)
 
-        st.info("📖 Подробные результаты см. в [MODEL_INTEGRATION_SUMMARY.md](MODEL_INTEGRATION_SUMMARY.md)")
+        st.info(
+            "📖 Подробные результаты см. в [MODEL_INTEGRATION_SUMMARY.md](MODEL_INTEGRATION_SUMMARY.md)"
+        )

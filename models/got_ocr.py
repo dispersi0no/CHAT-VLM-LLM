@@ -10,8 +10,9 @@ Recommended usage:
 """
 
 from typing import Any, Dict, Optional
-from PIL import Image
+
 import torch
+from PIL import Image
 
 from models.base_model import BaseModel
 from utils.logger import logger
@@ -19,26 +20,26 @@ from utils.logger import logger
 
 class GOTOCRModel(BaseModel):
     """GOT-OCR 2.0 model for document OCR following official recommendations."""
-    
+
     def __init__(self, config: Dict[str, Any]):
         """Initialize GOT-OCR model.
-        
+
         Args:
             config: Model configuration dictionary
         """
         super().__init__(config)
         self.model = None
         self.tokenizer = None
-        
+
         # GOT-OCR specific settings
-        self.ocr_type = config.get('ocr_type', 'format')
-        self.ocr_color = config.get('ocr_color', '')
-    
+        self.ocr_type = config.get("ocr_type", "format")
+        self.ocr_color = config.get("ocr_color", "")
+
     def load_model(self) -> None:
         """Load GOT-OCR model following official recommendations."""
         try:
             logger.info(f"Loading GOT-OCR model from {self.model_path}")
-            
+
             # Check if transformers is available
             try:
                 from transformers import AutoModel, AutoTokenizer
@@ -47,108 +48,96 @@ class GOTOCRModel(BaseModel):
                     "transformers library is required. Install with: "
                     "pip install transformers"
                 )
-            
+
             # Load tokenizer (official recommendation: trust_remote_code=True)
             logger.info("Loading tokenizer...")
             self.tokenizer = AutoTokenizer.from_pretrained(
-                self.model_path,
-                trust_remote_code=True
+                self.model_path, trust_remote_code=True
             )
-            
+
             # Determine device
             device = self._get_device()
             logger.info(f"Using device: {device}")
-            
+
             # Load model (official recommendation: trust_remote_code=True)
             logger.info("Loading model weights...")
-            
+
             # Build loading kwargs using base class method
             load_kwargs = self._get_load_kwargs()
-            
+
             # Load model
-            self.model = AutoModel.from_pretrained(
-                self.model_path,
-                **load_kwargs
-            )
-            
+            self.model = AutoModel.from_pretrained(self.model_path, **load_kwargs)
+
             # Set to eval mode
             self.model.eval()
-            
+
             logger.info("GOT-OCR model loaded successfully")
-            
+
         except Exception as e:
             logger.error(f"Failed to load GOT-OCR model: {e}")
             raise
-    
+
     def process_image(
         self,
         image: Image.Image,
         ocr_type: Optional[str] = None,
-        ocr_color: Optional[str] = None
+        ocr_color: Optional[str] = None,
     ) -> str:
         """Process image and extract text using GOT-OCR.
-        
+
         Args:
             image: PIL Image to process
             ocr_type: OCR type ('format', 'ocr', 'multi-crop')
             ocr_color: Optional color specification
-            
+
         Returns:
             Extracted text
         """
         if self.model is None or self.tokenizer is None:
             raise RuntimeError("Model not loaded. Call load_model() first.")
-        
+
         try:
             # Use provided parameters or defaults
             ocr_type = ocr_type or self.ocr_type
             ocr_color = ocr_color or self.ocr_color
-            
+
             logger.info(f"Processing image with GOT-OCR (type: {ocr_type})")
-            
+
             # Following official GOT-OCR usage:
             # result = model.chat(tokenizer, image_path, ocr_type=ocr_type)
-            
+
             with torch.no_grad():
                 # Note: This is a placeholder for actual GOT-OCR inference
                 # The exact API depends on the model's chat() method
-                if hasattr(self.model, 'chat'):
+                if hasattr(self.model, "chat"):
                     result = self.model.chat(
-                        self.tokenizer,
-                        image,
-                        ocr_type=ocr_type,
-                        ocr_color=ocr_color
+                        self.tokenizer, image, ocr_type=ocr_type, ocr_color=ocr_color
                     )
                 else:
                     # Fallback: basic inference
                     result = self._basic_inference(image)
-            
+
             logger.info("Text extraction completed")
             return result
-            
+
         except Exception as e:
             logger.error(f"Error processing image: {e}")
             raise
-    
+
     def _basic_inference(self, image: Image.Image) -> str:
         """Basic inference fallback."""
         # Placeholder for basic inference
         # This should be replaced with actual model-specific code
         return "[GOT-OCR inference placeholder - implement actual inference]"
-    
-    def chat(
-        self,
-        image: Image.Image,
-        prompt: str,
-        **kwargs
-    ) -> str:
+
+    def chat(self, image: Image.Image, prompt: str, **kwargs) -> str:
         """Chat with model about image (if supported).
-        
+
         Args:
             image: PIL Image
             prompt: User prompt
             **kwargs: Additional arguments
-            
+
         Returns:
             Model response
         """
@@ -156,19 +145,19 @@ class GOTOCRModel(BaseModel):
         # Return OCR result with prompt context
         ocr_result = self.process_image(image)
         return f"OCR Result:\n{ocr_result}"
-    
+
     def unload(self) -> None:
         """Unload model from memory."""
         if self.model is not None:
             del self.model
             self.model = None
-        
+
         if self.tokenizer is not None:
             del self.tokenizer
             self.tokenizer = None
-        
+
         # Clear CUDA cache if available
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
-        
+
         logger.info("GOT-OCR model unloaded")
