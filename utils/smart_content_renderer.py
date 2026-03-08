@@ -105,9 +105,10 @@ class SmartContentRenderer:
                     container.markdown(clean_table, unsafe_allow_html=True)
                         
                 except Exception as e:
-                    # Fallback - отображаем как HTML с unsafe_allow_html
+                    # Fallback — sanitize before rendering with unsafe_allow_html
                     container.markdown(f"**📊 Таблица:**")
-                    container.markdown(tables[i], unsafe_allow_html=True)
+                    safe_table = SmartContentRenderer.clean_html_for_display(tables[i])
+                    container.markdown(safe_table, unsafe_allow_html=True)
     
     @staticmethod
     def render_message_content(message: dict, container=None) -> None:
