@@ -1,7 +1,7 @@
 """Caching utilities for model results and processed images."""
 
 import hashlib
-import pickle
+import json
 from pathlib import Path
 from typing import Any, Optional, Callable
 from functools import wraps
@@ -25,9 +25,8 @@ class SimpleCache:
     
     def _get_cache_path(self, key: str) -> Path:
         """Get cache file path for a key."""
-        # Create hash of key for filename
         key_hash = hashlib.md5(key.encode()).hexdigest()
-        return self.cache_dir / f"{key_hash}.pkl"
+        return self.cache_dir / f"{key_hash}.json"
     
     def get(self, key: str, max_age: Optional[int] = None, default: Any = None) -> Any:
         """
@@ -54,8 +53,8 @@ class SimpleCache:
                 return default
         
         try:
-            with open(cache_path, 'rb') as f:
-                return pickle.load(f)
+            with open(cache_path, 'r', encoding='utf-8') as f:
+                return json.load(f)
         except Exception:
             return default
     
@@ -70,19 +69,22 @@ class SimpleCache:
         cache_path = self._get_cache_path(key)
         
         try:
-            with open(cache_path, 'wb') as f:
-                pickle.dump(value, f)
+            with open(cache_path, 'w', encoding='utf-8') as f:
+                json.dump(value, f, ensure_ascii=False, default=str)
         except Exception as e:
             print(f"Failed to cache value: {e}")
     
     def clear(self) -> None:
         """Clear all cache files."""
+        for cache_file in self.cache_dir.glob("*.json"):
+            cache_file.unlink()
+        # Clean up legacy pickle files
         for cache_file in self.cache_dir.glob("*.pkl"):
             cache_file.unlink()
     
     def size(self) -> int:
         """Get number of cached items."""
-        return len(list(self.cache_dir.glob("*.pkl")))
+        return len(list(self.cache_dir.glob("*.json")))
 
 
 def cached(cache: SimpleCache, max_age: Optional[int] = None):

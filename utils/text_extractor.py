@@ -37,8 +37,7 @@ class TextExtractor:
         """Fix common OCR recognition errors."""
         replacements = {
             'l\'': 'I',  # l apostrophe to I
-            '|': 'I',    # Pipe to I
-            '§': 'S',    # Section sign to S
+            '\u00a7': 'S',    # Section sign to S
         }
         
         # Apply replacements (context-aware logic can be added)
@@ -91,7 +90,7 @@ class TextExtractor:
     @staticmethod
     def extract_amounts(text: str) -> List[Dict[str, str]]:
         """Extract monetary amounts with currencies."""
-        pattern = r'([\$€£¥₽])\s?(\d+(?:[.,]\d+)?)'
+        pattern = r'([\$\u20ac\u00a3\u00a5\u20bd])\s?(\d+(?:[.,]\d+)?)'
         matches = re.findall(pattern, text)
         
         return [
