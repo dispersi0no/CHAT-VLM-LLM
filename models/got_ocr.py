@@ -28,8 +28,6 @@ class GOTOCRModel(BaseModel):
             config: Model configuration dictionary
         """
         super().__init__(config)
-        self.model = None
-        self.tokenizer = None
 
         # GOT-OCR specific settings
         self.ocr_type = config.get("ocr_type", "format")
