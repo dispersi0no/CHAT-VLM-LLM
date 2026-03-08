@@ -202,16 +202,57 @@ Markdown рендеринг
 
 **Структура:**
 ```yaml
-models:
-  model_key:
-    name: Отображаемое имя
-    model_path: HuggingFace ID
-    precision: fp16/fp32/int8/int4
-    device_map: auto/cuda/cpu
-    max_length: лимит токенов
+# Transformers режим — стабильные модели (CPU/GPU, прямая загрузка)
+transformers:
+  qwen_vl_2b:
+    name: Qwen2-VL 2B (Transformers)
+    model_path: Qwen/Qwen2-VL-2B-Instruct
+    precision: fp16
+    device_map: auto
+    max_new_tokens: 2048
+    # ... другие параметры
+
+  qwen3_vl_2b:
+    name: Qwen3-VL 2B (Transformers)
+    model_path: Qwen/Qwen3-VL-2B-Instruct
+    precision: fp16
+    device_map: auto
+    # ... другие параметры
+
+# vLLM режим — сервер инференса через Docker-контейнеры
+vllm:
+  dots_ocr:
+    model_path: rednote-hilab/dots.ocr
+    port: 8000
+    memory_gb: 4.5
+    # ...
+
+  qwen2_vl_2b:
+    model_path: Qwen/Qwen2-VL-2B-Instruct
+    port: 8001
+    memory_gb: 6.0
+    # ...
+
+  phi35_vision:
+    model_path: microsoft/Phi-3.5-vision-instruct
+    port: 8002
+    memory_gb: 8.0
+    # ...
+
+  qwen2_vl_7b:
+    model_path: Qwen/Qwen2-VL-7B-Instruct
+    port: 8003
+    memory_gb: 16.0
+    # ...
+
+  qwen3_vl_2b:
+    model_path: Qwen/Qwen3-VL-2B-Instruct
+    port: 8004
+    memory_gb: 6.5
+    # ...
 
 ocr:
-  supported_formats: [jpg, png, ...]
+  supported_formats: [jpg, jpeg, png, bmp, tiff]
   max_image_size: байты
   resize_max_dimension: пиксели
 
@@ -331,25 +372,26 @@ def test_image_preprocessing():
 
 ### Docker
 
-```dockerfile
-FROM python:3.10-slim
+Проект поставляется с несколькими Docker-конфигурациями:
 
-# Установка системных зависимостей
-RUN apt-get update && apt-get install -y \
-    libgl1-mesa-glx \
-    libglib2.0-0
+| Файл | Назначение |
+|------|------------|
+| `Dockerfile` | Полный образ (Streamlit + FastAPI, CUDA cu126) |
+| `Dockerfile.light` | Облегчённый образ без GPU-зависимостей |
+| `docker-compose.yml` | Стандартный стек (Streamlit + Nginx) |
+| `docker-compose-vllm.yml` | vLLM стек с отдельными контейнерами для каждой модели |
 
-# Установка Python пакетов
-COPY requirements.txt .
-RUN pip install -r requirements.txt
-
-# Копирование приложения
-COPY . /app
-WORKDIR /app
-
-# Запуск
-CMD ["streamlit", "run", "app.py"]
+**Запуск стандартного стека:**
+```bash
+docker compose up -d
 ```
+
+**Запуск vLLM стека:**
+```bash
+docker compose -f docker-compose-vllm.yml up -d
+```
+
+Nginx (`nginx.conf`) используется как reverse proxy перед Streamlit-приложением.
 
 ### Требования к ресурсам
 

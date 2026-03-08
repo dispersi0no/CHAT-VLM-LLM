@@ -58,17 +58,18 @@ text = model.process_image(image, ocr_type='format')
 
 ## Qwen2-VL 🟡 Нестабильная
 
-> **Статус:** Нестабильная, не доработана. Используйте Qwen3-VL.
+> **Статус:** Qwen2-VL 2B доступна в обоих режимах. Qwen2-VL 7B — только через vLLM (в transformers режиме не работает стабильно).
 
 ### Описание
 Qwen2-VL — vision-language модель от Alibaba Cloud с возможностями мультимодального понимания и чата.
 
-### Варианты
+### Варианты в config.yaml
 
-| Модель | Параметры | VRAM (FP16) | Описание |
-|--------|-----------|-------------|----------|
-| Qwen2-VL 2B | 2B | 4.7 GB | Лёгкая версия |
-| Qwen2-VL 7B | 7B | 16.1 GB | Полная версия |
+| Модель | Режим | Параметры | VRAM (FP16) | Описание |
+|--------|-------|-----------|-------------|----------|
+| Qwen2-VL 2B (Transformers) | transformers | 2B | 4.7 GB | Лёгкая версия |
+| Qwen2-VL 2B (vLLM) | vllm | 2B | 6.0 GB | Стабильная через vLLM |
+| Qwen2-VL 7B (vLLM) | vllm | 7B | 16.0 GB | Только vLLM |
 
 ### Сильные стороны
 - Мультимодальное понимание
@@ -109,13 +110,12 @@ response = model.chat(image, "Что изображено на этой карт
 ### Описание
 Qwen3-VL — новейшая серия VLM моделей с SOTA производительностью, расширенным OCR на 32 языках и возможностями визуального агента.
 
-### Варианты
+### Варианты в config.yaml
 
-| Модель | Параметры | VRAM (FP16) | INT8 | INT4 |
-|--------|-----------|-------------|------|------|
-| Qwen3-VL 2B | 2B | 4.4 GB | 2.2 GB | 1.5 GB |
-| Qwen3-VL 4B | 4B | 8.9 GB | 3.8 GB | 3 GB |
-| Qwen3-VL 8B | 8B | 17.6 GB | 10 GB | 6 GB |
+| Модель | Режим | Параметры | VRAM (FP16) |
+|--------|-------|-----------|-------------|
+| Qwen3-VL 2B (Transformers) | transformers | 2B | 4.4 GB |
+| Qwen3-VL 2B (vLLM) | vllm | 2B | 6.5 GB |
 
 ### Ключевые улучшения (vs Qwen2-VL)
 - OCR на 32 языках (было 19)
@@ -140,8 +140,8 @@ Qwen3-VL — новейшая серия VLM моделей с SOTA произв
 ```python
 from models import ModelLoader
 
-# Загрузка модели
-model = ModelLoader.load_model('qwen3_vl_2b')  # или 4b, 8b
+# Загрузка модели (Transformers режим)
+model = ModelLoader.load_model('qwen3_vl_2b')
 
 # OCR с указанием языка
 text = model.extract_text(image, language='Russian')
@@ -169,6 +169,28 @@ analysis = model.analyze_document(image, focus='tables')
 # Визуальное рассуждение
 reasoning = model.visual_reasoning(image, "Вопрос для анализа")
 ```
+
+---
+
+## Phi-3.5 Vision 🔵 vLLM
+
+> **Статус:** Доступна только через vLLM бэкенд.
+
+### Описание
+Phi-3.5 Vision — продвинутая vision-language модель от Microsoft для сложных задач визуального анализа.
+
+### Характеристики
+
+| Параметр | Значение |
+|----------|----------|
+| Режим | vLLM |
+| VRAM | 8 GB |
+| Порт контейнера | 8002 |
+
+### Применение
+- Сложные задачи визуального анализа
+- Понимание документов
+- Описание и рассуждение
 
 ---
 
@@ -257,27 +279,16 @@ text = model.process_image(image, mode='grounding_ocr', bbox=[100, 100, 500, 500
 
 ## Сравнение моделей
 
-### Точность OCR (CER, %, ниже лучше)
+### Модели в config.yaml
 
-| Модель | Английский | Русский | Китайский | Таблицы |
-|--------|------------|---------|-----------|---------|
-| Qwen3-VL 8B | 1.8 | 2.1 | 1.5 | 3.2 |
-| Qwen3-VL 4B | 2.2 | 2.5 | 1.9 | 3.8 |
-| Qwen3-VL 2B | 2.8 | 3.1 | 2.4 | 4.5 |
-| GOT-OCR 2.0 | 2.5 | 3.0 | 2.2 | 2.8 |
-| Qwen2-VL 7B | 2.0 | 2.4 | 1.7 | 3.5 |
-| dots.ocr | 2.3 | 2.8 | 2.0 | 3.0 |
-
-### Скорость (сек/страница, RTX 4090)
-
-| Модель | FP16 | INT8 |
-|--------|------|------|
-| GOT-OCR 2.0 | 0.5 | 0.6 |
-| Qwen2-VL 2B | 0.8 | 1.0 |
-| Qwen3-VL 2B | 0.8 | 1.0 |
-| Qwen3-VL 4B | 1.5 | 1.8 |
-| Qwen3-VL 8B | 2.5 | 3.0 |
-| dots.ocr | 1.2 | 1.5 |
+| Модель | Режим | Параметры | VRAM | Статус |
+|--------|-------|-----------|------|--------|
+| Qwen3-VL 2B | transformers / vllm | 2B | 4.4–6.5 GB | 🟢 Основная |
+| Qwen2-VL 2B | transformers / vllm | 2B | 4.7–6.0 GB | 🟡 Нестабильная |
+| Qwen2-VL 7B | vllm | 7B | 16.0 GB | 🟡 Только vLLM |
+| Phi-3.5 Vision | vllm | 3.8B | 8.0 GB | 🔵 vLLM |
+| dots.ocr | vllm | 1.7B | 4.5 GB | 🟢 Рабочая |
+| GOT-OCR 2.0 | transformers | 580M | 3 GB | ⚠️ Экспериментальная |
 
 ### Рекомендации по выбору
 
@@ -287,6 +298,7 @@ text = model.process_image(image, mode='grounding_ocr', bbox=[100, 100, 500, 500
 | Мультиязычный OCR (100+ языков) | dots.ocr |
 | Сложные макеты и таблицы | dots.ocr |
 | Чат и анализ | Qwen3-VL 2B |
+| Сложный визуальный анализ | Phi-3.5 Vision (vLLM) |
 
 ## Загрузка моделей
 
@@ -300,7 +312,7 @@ model = ModelLoader.load_model('qwen3_vl_2b')
 
 # С параметрами
 model = ModelLoader.load_model(
-    'qwen3_vl_8b',
+    'qwen3_vl_2b',
     precision='int8',
     use_flash_attention=True
 )
@@ -312,7 +324,7 @@ model = ModelLoader.load_model(
 from transformers import AutoModel, AutoProcessor
 
 model = AutoModel.from_pretrained(
-    "Qwen/Qwen3-VL-8B-Instruct",
+    "Qwen/Qwen3-VL-2B-Instruct",
     torch_dtype=torch.float16,
     device_map="auto",
     trust_remote_code=True
@@ -323,7 +335,7 @@ model = AutoModel.from_pretrained(
 
 ```python
 # Выгрузка конкретной модели
-ModelLoader.unload_model('qwen3_vl_8b')
+ModelLoader.unload_model('qwen3_vl_2b')
 
 # Выгрузка всех моделей
 ModelLoader.unload_all_models()

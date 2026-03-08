@@ -12,6 +12,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cloud deployment guide
 - Performance benchmarks
 
+## [0.3.1] - 2026-03-08
+
+### Fixed
+- **Security**: Replaced pickle cache with JSON serialization (RCE vulnerability) (#71)
+- **Security**: Removed logger side-effect on import — `setup_logger()` now explicit (#71)
+- **CI/CD**: Fixed dependency installation order in GitHub Actions (#72)
+- **CI/CD**: Pinned `qwen-vl-utils==0.0.10` to prevent breakage (#72)
+
+### Added
+- **Tests**: 45 new tests — API endpoints, RateLimiter, file validation, JSON cache (#74)
+- **Tests**: `tests/conftest.py` with shared fixtures and sys.path setup (#74)
+- **Docs**: Updated architecture, models, GPU requirements for current state (#73)
+
+### Changed
+- `utils/cache.py` stores `.json` files instead of `.pkl` with `default=str` fallback (#71)
+- `utils/logger.py` no longer auto-configures logging on import (#71)
+- `requirements.txt` CI extras: `httpx`, `qwen-vl-utils==0.0.10` (#72)
+
 ## [0.3.0] - 2026-03-07
 
 ### Added
@@ -25,10 +43,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Chat endpoint (`POST /chat`)
   - Batch processing (`POST /batch/ocr`)
   - Model management endpoints
+  - Rate limiting per IP
+  - File validation (size, extension, PIL verify)
 
 - **New Models**
   - dots.ocr integration (SOTA document parser, 100+ languages)
-  - Qwen3-VL (2B/4B/8B) with 32-language OCR, 256K context
+  - Qwen3-VL 2B with 32-language OCR, 256K context
+  - Phi-3.5 Vision (vLLM-only)
 
 - **Infrastructure**
   - `.dockerignore` for optimized Docker builds
@@ -51,7 +72,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Fixed CI/CD — black/isort checks now report properly
   - Fixed tests to match current config.yaml structure
   - Removed unused scripts (update_blackwell_libraries.py)
-  - Updated docs (architecture, api_guide, models) to reflect reality
 
 ### Removed
 - ~370 temporary files (tests, fixes, debug scripts, JSON reports, backups)
@@ -143,7 +163,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Quick start guide (`QUICKSTART.md`)
   - Model documentation (`docs/models.md`)
   - Architecture documentation (`docs/architecture.md`)
-  - Research log template (`docs/research_log.md`)
   - Project summary (`PROJECT_SUMMARY.md`)
   
 - **Interactive Notebooks**
@@ -179,6 +198,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Version History Summary
 
+- **0.3.1** - Security fixes, CI/CD fixes, test coverage expansion
+- **0.3.0** - vLLM support, FastAPI API, project audit & cleanup
 - **0.2.0** - Production improvements (logging, caching, validation, UI enhancements)
 - **0.1.0** - Initial release (project foundation, model framework, documentation)
 
