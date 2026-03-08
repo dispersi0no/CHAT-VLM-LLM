@@ -1,4 +1,12 @@
-"""Base class for VLM models."""
+"""Base class for VLM models.
+
+All VLM models inherit from BaseModel which provides:
+- Device detection (_get_device)
+- Loading kwargs (_get_load_kwargs)
+- Field extraction (extract_fields)
+- Unified inference entry point (run)
+- Memory cleanup (unload)
+"""
 
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
@@ -30,6 +38,7 @@ class BaseModel(ABC):
         self.device_map = config.get("device_map", "auto")
         self.model = None
         self.processor = None
+        self.tokenizer = None
         self.device = self._get_device()
 
     def _get_device(self) -> str:
@@ -220,7 +229,7 @@ class BaseModel(ABC):
             if self.processor is not None:
                 del self.processor
                 self.processor = None
-            if hasattr(self, "tokenizer") and self.tokenizer is not None:
+            if self.tokenizer is not None:
                 del self.tokenizer
                 self.tokenizer = None
 

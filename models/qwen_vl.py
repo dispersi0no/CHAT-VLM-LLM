@@ -35,8 +35,6 @@ class QwenVLModel(BaseModel):
             config: Model configuration dictionary
         """
         super().__init__(config)
-        self.model = None
-        self.processor = None
 
         # Qwen2-VL specific settings
         self.min_pixels = config.get("min_pixels", 256)

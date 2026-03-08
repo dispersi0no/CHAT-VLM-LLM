@@ -38,8 +38,6 @@ class DotsOCRModel(BaseModel):
 
     def __init__(self, config: Dict[str, Any]):
         super().__init__(config)
-        self.model = None
-        self.processor = None
         self.max_new_tokens = config.get(
             "max_new_tokens", 2048
         )  # Уменьшено для стабильности
