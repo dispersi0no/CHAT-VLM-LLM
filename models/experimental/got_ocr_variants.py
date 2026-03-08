@@ -294,7 +294,7 @@ class GOTOCRHFModel(BaseModel):
         
         # Индикаторы мусорного вывода
         garbage_indicators = [
-            "Champion", "kaps", "ADDR", "ĠĠĠ", "ĊĊĊ", 
+            "ĠĠĠ", "ĊĊĊ", 
             "▁▁▁", "ĉĉĉ", "ġġġ", "Ċ", "ĠĠ"
         ]
         

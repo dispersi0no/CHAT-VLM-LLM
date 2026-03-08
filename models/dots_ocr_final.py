@@ -297,7 +297,7 @@ class DotsOCRFinalModel(BaseModel):
                 logger.info("Processing XML tables in output")
                 processed_data = self.xml_processor.process_ocr_output(
                     text=result,
-                    model_name=self.model_name,
+                    model_name=self.model_id,
                     extract_tables=True,
                     extract_fields=self.extract_structured_fields,
                     output_format='structured'
@@ -381,7 +381,7 @@ class DotsOCRFinalModel(BaseModel):
             if self.xml_processor:
                 processed = self.xml_processor.process_ocr_output(
                     text=result,
-                    model_name=self.model_name,
+                    model_name=self.model_id,
                     extract_tables=True,
                     extract_fields=True,
                     output_format='structured'

@@ -173,7 +173,7 @@ class BaseModel(ABC):
             "loaded": self.model is not None
         }
     
-    def unload_model(self) -> None:
+    def unload(self) -> None:
         """Unload model from memory."""
         if self.model is not None:
             del self.model
