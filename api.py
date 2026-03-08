@@ -19,6 +19,7 @@ import io
 import time
 import logging
 import os
+import yaml
 # import magic  # python-magic для определения MIME-типа - временно отключено для Windows
 
 logging.basicConfig(level=logging.INFO)
@@ -66,18 +67,44 @@ security_config = SecurityConfig()
 # =============================================================================
 
 class RateLimiter:
-    """Простой rate limiter на основе IP."""
+    """Простой rate limiter на основе IP.
     
-    def __init__(self, requests_per_minute: int = 60):
+    NOTE: This in-memory rate limiter is only effective when the API is
+    run with a single worker process (--workers 1). With multiple workers
+    each process maintains its own counter, so the effective limit is
+    multiplied by the number of workers.
+    """
+
+    def __init__(self, requests_per_minute: int = 60, window: int = 60, cleanup_interval: int = 100):
         self.requests_per_minute = requests_per_minute
+        # Window size in seconds
+        self.window = window
+        # How often to run stale-entry cleanup (every N calls to is_allowed)
+        self._cleanup_interval = cleanup_interval
+        self._call_count = 0
         self.requests: Dict[str, List[float]] = defaultdict(list)
     
+    def _cleanup_stale_entries(self) -> None:
+        """Remove entries older than the window period to prevent memory leaks."""
+        now = time.time()
+        stale_ips = [
+            ip for ip, timestamps in self.requests.items()
+            if not timestamps or now - max(timestamps) > self.window * 2
+        ]
+        for ip in stale_ips:
+            del self.requests[ip]
+
     def is_allowed(self, client_ip: str) -> bool:
         """Проверка, разрешён ли запрос."""
+        # Periodic cleanup to prevent unbounded memory growth
+        self._call_count += 1
+        if self._call_count % self._cleanup_interval == 0:
+            self._cleanup_stale_entries()
+
         now = time.time()
-        minute_ago = now - 60
+        minute_ago = now - self.window
         
-        # Очистка старых записей
+        # Очистка старых записей для данного IP
         self.requests[client_ip] = [
             t for t in self.requests[client_ip] if t > minute_ago
         ]
@@ -93,7 +120,7 @@ class RateLimiter:
     def get_remaining(self, client_ip: str) -> int:
         """Получение оставшихся запросов."""
         now = time.time()
-        minute_ago = now - 60
+        minute_ago = now - self.window
         recent = [t for t in self.requests[client_ip] if t > minute_ago]
         return max(0, self.requests_per_minute - len(recent))
 
@@ -212,6 +239,67 @@ def get_model(model_name: str):
 
 
 # =============================================================================
+# Утилиты для унифицированного вызова моделей
+# =============================================================================
+
+def _run_ocr(model_instance, model_name: str, image, language: Optional[str] = None) -> str:
+    """Единая точка диспетчеризации OCR для всех типов моделей.
+    
+    Args:
+        model_instance: Загруженный экземпляр модели
+        model_name: Идентификатор модели (для выбора стратегии)
+        image: PIL Image
+        language: Опциональная подсказка языка
+        
+    Returns:
+        Извлечённый текст
+    """
+    if "qwen3" in model_name:
+        return model_instance.extract_text(image, language=language)
+    elif "qwen" in model_name:
+        return model_instance.chat(image, "Extract all text from this document.")
+    elif model_name == "dots_ocr":
+        result = model_instance.parse_document(image, return_json=False)
+        return result.get('raw_text', str(result))
+    else:  # GOT-OCR и прочие
+        return model_instance.process_image(image)
+
+
+def _run_chat(
+    model_instance,
+    model_name: str,
+    image,
+    prompt: str,
+    temperature: float = 0.7,
+    max_tokens: int = 512
+) -> str:
+    """Единая точка диспетчеризации чата для всех типов моделей.
+    
+    Args:
+        model_instance: Загруженный экземпляр модели
+        model_name: Идентификатор модели (для выбора стратегии)
+        image: PIL Image
+        prompt: Вопрос пользователя
+        temperature: Температура сэмплирования
+        max_tokens: Максимальное число токенов
+        
+    Returns:
+        Ответ модели
+    """
+    if "qwen" in model_name:
+        return model_instance.chat(
+            image=image,
+            prompt=prompt,
+            temperature=temperature,
+            max_new_tokens=max_tokens
+        )
+    elif model_name == "dots_ocr":
+        return str(model_instance.process_image(image, prompt=prompt))
+    else:  # GOT-OCR и прочие
+        return model_instance.process_image(image)
+
+
+# =============================================================================
 # Эндпоинты
 # =============================================================================
 
@@ -258,21 +346,23 @@ async def health_check():
 
 @app.get("/models")
 async def list_models():
-    """Список доступных моделей."""
+    """Список доступных моделей (читается из config.yaml)."""
+    try:
+        config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.yaml")
+        with open(config_path, "r", encoding="utf-8") as f:
+            config = yaml.safe_load(f)
+    except Exception as e:
+        logger.warning(f"Не удалось прочитать config.yaml: {e}")
+        config = {}
+
+    # Collect model IDs from all config sections, deduplicating while preserving order
+    model_ids: dict = {}
+    for section in ("models", "transformers", "vllm"):
+        for model_id in config.get(section, {}).keys():
+            model_ids[model_id] = True
+
     return {
-        "available": [
-            {"id": "got_ocr", "name": "GOT-OCR 2.0", "params": "580M", "vram_fp16": "3GB"},
-            {"id": "qwen_vl_2b", "name": "Qwen2-VL 2B", "params": "2B", "vram_fp16": "4.7GB"},
-            {"id": "qwen_vl_7b", "name": "Qwen2-VL 7B", "params": "7B", "vram_fp16": "16.1GB"},
-            {"id": "qwen3_vl_2b", "name": "Qwen3-VL 2B", "params": "2B", "vram_fp16": "4.4GB"},
-            {"id": "qwen3_vl_4b", "name": "Qwen3-VL 4B", "params": "4B", "vram_fp16": "8.9GB"},
-            {"id": "qwen3_vl_8b", "name": "Qwen3-VL 8B", "params": "8B", "vram_fp16": "17.6GB"},
-            {"id": "dots_ocr", "name": "dots.ocr", "params": "1.7B", "vram_bf16": "8GB"},
-            {"id": "phi3_vision", "name": "Phi-3.5 Vision", "params": "4.2B", "vram_fp16": "7.7GB"},
-            {"id": "got_ocr_ucas", "name": "GOT-OCR 2.0 (UCAS)", "params": "580M", "vram_fp16": "2.7GB"},
-            {"id": "got_ocr_hf", "name": "GOT-OCR 2.0 (HF)", "params": "580M", "vram_fp16": "1.1GB"},
-            {"id": "deepseek_ocr", "name": "DeepSeek OCR", "params": "~1B", "vram_fp16": "0.01GB"}
-        ],
+        "available": list(model_ids.keys()),
         "loaded": list(model_cache.keys())
     }
 
@@ -307,16 +397,7 @@ async def extract_text(
         model_instance = get_model(model)
         start_time = time.time()
         
-        # Обработка в зависимости от типа модели
-        if "qwen3" in model:
-            text = model_instance.extract_text(image, language=language)
-        elif "qwen" in model:
-            text = model_instance.chat(image, "Extract all text from this document.")
-        elif model == "dots_ocr":
-            result = model_instance.parse_document(image, return_json=False)
-            text = result.get('raw_text', str(result))
-        else:  # GOT-OCR
-            text = model_instance.process_image(image)
+        text = _run_ocr(model_instance, model, image, language=language)
         
         processing_time = time.time() - start_time
         
@@ -379,17 +460,7 @@ async def chat_with_image(
         model_instance = get_model(model)
         start_time = time.time()
         
-        if "qwen" in model:
-            response = model_instance.chat(
-                image=image,
-                prompt=prompt,
-                temperature=temperature,
-                max_new_tokens=max_tokens
-            )
-        elif model == "dots_ocr":
-            response = str(model_instance.process_image(image, prompt=prompt))
-        else:  # GOT-OCR
-            response = model_instance.process_image(image)
+        response = _run_chat(model_instance, model, image, prompt, temperature, max_tokens)
         
         processing_time = time.time() - start_time
         
@@ -450,12 +521,7 @@ async def batch_ocr(
             model_instance = get_model(model)
             start_time = time.time()
             
-            if "qwen3" in model:
-                text = model_instance.extract_text(image)
-            elif "qwen" in model:
-                text = model_instance.chat(image, "Extract all text.")
-            else:
-                text = model_instance.process_image(image)
+            text = _run_ocr(model_instance, model, image)
             
             processing_time = time.time() - start_time
             
