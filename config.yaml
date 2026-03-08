@@ -10,77 +10,14 @@ emergency_mode:
   reason: Critical CUDA errors detected in logs
   timestamp: '2026-01-24T22:53:33.044348'
 
-# Transformers режим - стабильные модели
-transformers:
-  qwen_vl_2b:
-    attn_implementation: eager
-    context_length: 4096
-    device_map: auto
-    load_in_4bit: false
-    load_in_8bit: false
-    max_new_tokens: 2048
-    model_path: Qwen/Qwen2-VL-2B-Instruct
-    name: Qwen2-VL 2B (Transformers)
-    precision: fp16
-    torch_dtype: float16
-    trust_remote_code: true
-    use_flash_attention: false
-  
-  qwen3_vl_2b:
-    attn_implementation: eager
-    context_length: 4096
-    device_map: auto
-    load_in_4bit: false
-    load_in_8bit: false
-    max_new_tokens: 2048
-    model_path: Qwen/Qwen3-VL-2B-Instruct
-    name: Qwen3-VL 2B (Transformers)
-    precision: fp16
-    torch_dtype: float16
-    trust_remote_code: true
-    use_flash_attention: false
+# Зарезервировано для будущего использования (Transformers multi-model режим)
+# transformers: ...
 
-# vLLM режим - включая dots.ocr
-vllm:
-  dots_ocr:
-    model_path: rednote-hilab/dots.ocr
-    name: dots.ocr (vLLM - Рекомендуется)
-    max_new_tokens: 1024
-    context_length: 2048
-    precision: fp16
-    trust_remote_code: true
-  
-  qwen_vl_2b_vllm:
-    model_path: Qwen/Qwen2-VL-2B-Instruct
-    name: Qwen2-VL 2B (vLLM)
-    max_new_tokens: 2048
-    context_length: 4096
-    precision: fp16
-    trust_remote_code: true
-  
-  qwen3_vl_2b_vllm:
-    model_path: Qwen/Qwen3-VL-2B-Instruct
-    name: Qwen3-VL 2B (vLLM - Рекомендуется)
-    max_new_tokens: 2048
-    context_length: 4096
-    precision: fp16
-    trust_remote_code: true
+# Зарезервировано для будущего использования (vLLM режим)
+# vllm: ...
 
-# Совместимость со старой конфигурацией
+# Модели, загружаемые ModelLoader (единственный источник правды)
 models:
-  # dots_ocr: # Отключено в Transformers - используйте vLLM режим
-  #   attn_implementation: eager
-  #   context_length: 2048
-  #   device_map: auto
-  #   load_in_4bit: false
-  #   load_in_8bit: false
-  #   max_new_tokens: 1024
-  #   model_path: rednote-hilab/dots.ocr
-  #   name: dots.ocr (Отключено - используйте vLLM)
-  #   precision: fp16
-  #   torch_dtype: float16
-  #   trust_remote_code: true
-  #   use_flash_attention: false
   qwen3_vl_2b:
     attn_implementation: eager
     context_length: 4096
