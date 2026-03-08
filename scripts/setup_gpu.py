@@ -9,7 +9,7 @@ try:
     import torch
 except ImportError:
     print("❌ PyTorch не установлен!")
-    print("Установите: pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121")
+    print("Установите: pip install torch torchvision --index-url https://download.pytorch.org/whl/cu126")
     sys.exit(1)
 
 
@@ -27,7 +27,7 @@ def check_cuda():
         print("3. GPU не поддерживает CUDA")
         print("\nРекомендации:")
         print("- Установите NVIDIA драйверы: https://www.nvidia.com/Download/index.aspx")
-        print("- Переустановите PyTorch с CUDA: pip install torch --index-url https://download.pytorch.org/whl/cu121")
+        print("- Переустановите PyTorch с CUDA: pip install torch --index-url https://download.pytorch.org/whl/cu126")
         return False
     
     print(f"✓ CUDA доступна: {torch.version.cuda}")
