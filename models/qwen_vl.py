@@ -207,19 +207,3 @@ class QwenVLModel(BaseModel):
         except Exception as e:
             logger.error(f"Error in chat: {e}")
             raise
-
-    def unload(self) -> None:
-        """Unload model from memory."""
-        if self.model is not None:
-            del self.model
-            self.model = None
-
-        if self.processor is not None:
-            del self.processor
-            self.processor = None
-
-        # Clear CUDA cache if available
-        if torch.cuda.is_available():
-            torch.cuda.empty_cache()
-
-        logger.info("Qwen2-VL model unloaded")

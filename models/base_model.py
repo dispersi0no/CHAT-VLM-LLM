@@ -213,11 +213,25 @@ class BaseModel(ABC):
 
     def unload(self) -> None:
         """Unload model from memory."""
-        if self.model is not None:
-            del self.model
-            del self.processor
-            self.model = None
-            self.processor = None
+        try:
+            if self.model is not None:
+                del self.model
+                self.model = None
+            if self.processor is not None:
+                del self.processor
+                self.processor = None
+            if hasattr(self, "tokenizer") and self.tokenizer is not None:
+                del self.tokenizer
+                self.tokenizer = None
 
             if torch.cuda.is_available():
-                torch.cuda.empty_cache()
+                try:
+                    torch.cuda.empty_cache()
+                    torch.cuda.synchronize()
+                except Exception as e:
+                    logger.warning(f"Warning during CUDA cleanup: {e}")
+
+            logger.info("Model unloaded successfully")
+
+        except Exception as e:
+            logger.warning(f"Warning during model unload: {e}")
