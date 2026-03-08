@@ -8,6 +8,7 @@
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-ee4c2c.svg?style=for-the-badge&logo=pytorch&logoColor=white)](https://pytorch.org)
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg?style=for-the-badge&logo=docker&logoColor=white)](https://docker.com)
 [![License](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](LICENSE)
+[![CI](https://img.shields.io/github/actions/workflow/status/dispersi0no/CHAT-VLM-LLM/ci.yml?style=for-the-badge&label=CI)](https://github.com/dispersi0no/CHAT-VLM-LLM/actions/workflows/ci.yml)
 
 <p align="center">
   <b>Комплексный инструментарий для OCR документов и мультимодальных AI-приложений</b>
@@ -71,6 +72,28 @@
 
 ---
 
+## 🏗️ Архитектура моделей
+
+Все модели наследуют от `BaseModel` (ABC):
+
+```
+BaseModel (abstract)
+├── _get_device()          # Auto-detect CUDA/MPS/CPU
+├── _get_load_kwargs()     # dtype + device_map
+├── extract_fields()       # JSON field extraction
+├── run()                  # Unified inference entry point
+├── unload()               # GPU memory cleanup
+├── load() *abstract*
+└── inference() *abstract*
+    ┃
+    ├── Qwen3VLModel       # Qwen3-VL 2B
+    ├── DotsOCRModel       # dots.ocr
+    ├── QwenVLModel        # Qwen2-VL
+    └── GOTOCRModel        # GOT-OCR 2.0
+```
+
+---
+
 ## 🚀 Быстрый старт
 
 ### Установка
@@ -108,6 +131,26 @@ docker-compose up -d
 
 ---
 
+## 🧪 Разработка
+
+### Тестирование
+```bash
+pytest tests/ -v
+```
+
+### Линтинг
+```bash
+black . && isort --profile black .
+```
+
+### CI
+При каждом push/PR автоматически запускаются:
+- ✅ black (форматирование)
+- ✅ isort (сортировка импортов)
+- ✅ pytest на Python 3.10, 3.11, 3.12
+
+---
+
 ## 📊 Требования к GPU
 
 | GPU | VRAM | Рекомендация | Статус |
@@ -125,33 +168,33 @@ docker-compose up -d
 ```
 📂 CHAT-VLM-LLM/
 ├── 📂 models/
-│   ├── 🟢 qwen3_vl.py            # Qwen3-VL (рабочая)
-│   ├── 🟢 dots_ocr.py            # dots.ocr (рабочая)
-│   ├── 🟢 dots_ocr_final.py      # dots.ocr final
-│   ├── ⬜ base_model.py          # Базовый класс
-│   ├── ⬜ model_loader.py        # Загрузчик моделей
+│   ├── ⬜ __init__.py
+│   ├── ⬜ base_model.py           # Abstract base — device, unload, extract_fields
+│   ├── 🟢 qwen3_vl.py            # Qwen3-VL 2B (основная)
+│   ├── 🟢 dots_ocr.py            # dots.ocr parser
 │   ├── 🟡 qwen_vl.py             # Qwen2-VL (нестабильна)
-│   ├── 🔴 got_ocr.py             # GOT-OCR (не работает)
-│   ├── 🔴 deepseek_ocr.py        # DeepSeek (не работает)
-│   └── 🔴 phi3_vision.py         # Phi-3 (не работает)
+│   ├── 🔴 got_ocr.py             # GOT-OCR 2.0 (не работает)
+│   ├── ⬜ model_loader.py        # Фабрика загрузки моделей
+│   └── 📂 experimental/          # Экспериментальные модели
 ├── 📂 utils/                      # Утилиты обработки
-├── 📂 ui/                         # UI компоненты
-├── 📂 tests/                      # Тесты
+├── 📂 ui/                         # Streamlit UI компоненты
+│   ├── 📂 pages/                  # Страницы (home, chat, ocr, docs)
+│   ├── sidebar.py                 # Боковая панель
+│   ├── components.py              # Переиспользуемые компоненты
+│   ├── message_renderer.py        # Рендер сообщений чата
+│   ├── bbox_display.py            # Отображение bounding boxes
+│   └── styles.py                  # CSS стили
+├── 📂 tests/                      # Pytest тесты
 ├── 📂 docs/                       # Документация
-├── 📂 .github/                    # CI/CD workflows
+├── 📂 .github/workflows/          # CI/CD (black, isort, pytest)
 ├── 🐳 Dockerfile                  # Docker образ
 ├── 💨 Dockerfile.light            # Light версия
-├── ⚙️ config.yaml                 # Конфигурация
+├── ⚙️ config.yaml                 # Конфигурация моделей
 ├── 🚀 app.py                      # Streamlit приложение
 ├── 🔌 api.py                      # FastAPI REST API
+├── 📄 requirements.txt            # Зависимости
 └── 📄 LICENSE                     # MIT
 ```
-
----
-
-## 🤝 Участие в разработке
-
-Приветствуем вклад в проект! Смотрите [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ---
 
@@ -182,8 +225,6 @@ docker-compose up -d
 
 <div align="center">
 
-**Сделано с ❤️ для сообщества AI**
-
-🟢 **Qwen3-VL 2B** • 🟢 **dots.ocr** • 🐳 **Docker Ready**
+[![CI](https://img.shields.io/github/actions/workflow/status/dispersi0no/CHAT-VLM-LLM/ci.yml?style=for-the-badge&label=CI)](https://github.com/dispersi0no/CHAT-VLM-LLM/actions/workflows/ci.yml)
 
 </div>
