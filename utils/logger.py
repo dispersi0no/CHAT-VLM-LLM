@@ -81,9 +81,32 @@ def setup_logger(
     return logger
 
 
-# Create default logger
-logger = setup_logger(
-    name="chatvlmllm",
-    level="INFO",
-    log_file=f"logs/chatvlmllm_{datetime.now().strftime('%Y%m%d')}.log"
-)
+def enable_file_logging(
+    log_dir: str = "logs",
+    name: str = "chatvlmllm"
+) -> None:
+    """
+    Explicitly enable file logging. Call this from app.py entrypoint,
+    not at import time.
+    
+    Args:
+        log_dir: Directory for log files
+        name: Logger name to attach file handler to
+    """
+    log_path = Path(log_dir) / f"chatvlmllm_{datetime.now().strftime('%Y%m%d')}.log"
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    
+    existing_logger = logging.getLogger(name)
+    
+    file_handler = logging.FileHandler(log_path, encoding='utf-8')
+    file_handler.setLevel(logging.DEBUG)
+    file_formatter = logging.Formatter(
+        '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S'
+    )
+    file_handler.setFormatter(file_formatter)
+    existing_logger.addHandler(file_handler)
+
+
+# Create default logger — console only, no file side-effects on import
+logger = setup_logger(name="chatvlmllm", level="INFO")
