@@ -4,55 +4,57 @@ Consolidates bbox_table_renderer.py, the rendering part of html_table_renderer.p
 xml_formatter.py, and the unique export helpers from ocr_output_processor.py.
 """
 
-import re
 import html as html_module
 import json
-from typing import List, Dict, Any, Optional
+import re
+from typing import Any, Dict, List, Optional
 
 try:
     import pandas as pd
+
     _PANDAS_AVAILABLE = True
 except ImportError:
     _PANDAS_AVAILABLE = False
 
 try:
     import streamlit as st
+
     _STREAMLIT_AVAILABLE = True
 except ImportError:
     _STREAMLIT_AVAILABLE = False
 
 from .table_parser import HTMLTableParser, XMLTableParser, analyze_ocr_output
 
-
 # ─── BBOX Table Renderer ──────────────────────────────────────────────────────
+
 
 class BBoxTableRenderer:
     """Класс для создания HTML таблиц с BBOX результатами"""
 
     # Цвета категорий (синхронизированы с BBoxVisualizer)
     CATEGORY_COLORS = {
-        'Text': '#FF6B6B',
-        'Title': '#4ECDC4',
-        'Table': '#45B7D1',
-        'Picture': '#96CEB4',
-        'Formula': '#FFEAA7',
-        'Caption': '#DDA0DD',
-        'Footnote': '#F0A500',
-        'List-item': '#FF7675',
-        'Page-header': '#74B9FF',
-        'Page-footer': '#A29BFE',
-        'Section-header': '#FD79A8',
-        'Signature': '#00B894',
-        'Stamp': '#E17055',
-        'Logo': '#6C5CE7',
-        'Barcode': '#FDCB6E',
-        'QR-code': '#E84393'
+        "Text": "#FF6B6B",
+        "Title": "#4ECDC4",
+        "Table": "#45B7D1",
+        "Picture": "#96CEB4",
+        "Formula": "#FFEAA7",
+        "Caption": "#DDA0DD",
+        "Footnote": "#F0A500",
+        "List-item": "#FF7675",
+        "Page-header": "#74B9FF",
+        "Page-footer": "#A29BFE",
+        "Section-header": "#FD79A8",
+        "Signature": "#00B894",
+        "Stamp": "#E17055",
+        "Logo": "#6C5CE7",
+        "Barcode": "#FDCB6E",
+        "QR-code": "#E84393",
     }
 
     def get_category_color(self, category: str) -> str:
         """Получение цвета для категории"""
         category_normalized = category.strip().title()
-        return self.CATEGORY_COLORS.get(category_normalized, '#999999')
+        return self.CATEGORY_COLORS.get(category_normalized, "#999999")
 
     def render_elements_table(self, elements: List[Dict[str, Any]]) -> str:
         """Создание HTML таблицы с элементами"""
@@ -140,14 +142,14 @@ class BBoxTableRenderer:
         """]
 
         for i, element in enumerate(elements, 1):
-            bbox = element.get('bbox', [0, 0, 0, 0])
-            category = element.get('category', 'Unknown')
-            text = element.get('text', '')
+            bbox = element.get("bbox", [0, 0, 0, 0])
+            category = element.get("category", "Unknown")
+            text = element.get("text", "")
 
             color = self.get_category_color(category)
             bbox_str = f"[{bbox[0]}, {bbox[1]}, {bbox[2]}, {bbox[3]}]"
             display_text = text[:100] + "..." if len(text) > 100 else text
-            display_text = display_text.replace('\n', ' ').replace('\r', '')
+            display_text = display_text.replace("\n", " ").replace("\r", "")
 
             _category = html_module.escape(str(category))
             _bbox_str = html_module.escape(str(bbox_str))
@@ -182,7 +184,7 @@ class BBoxTableRenderer:
 
         categories: Dict[str, int] = {}
         for element in elements:
-            category = element.get('category', 'Unknown')
+            category = element.get("category", "Unknown")
             categories[category] = categories.get(category, 0) + 1
 
         html_parts = ["""
@@ -261,9 +263,9 @@ class BBoxTableRenderer:
         total_area = 0
 
         for element in elements:
-            category = element.get('category', 'Unknown')
+            category = element.get("category", "Unknown")
             categories[category] = categories.get(category, 0) + 1
-            bbox = element.get('bbox', [0, 0, 0, 0])
+            bbox = element.get("bbox", [0, 0, 0, 0])
             area = (bbox[2] - bbox[0]) * (bbox[3] - bbox[1])
             total_area += area
 
@@ -320,6 +322,7 @@ class BBoxTableRenderer:
 
 # ─── HTML Table Renderer ──────────────────────────────────────────────────────
 
+
 class HTMLTableRenderer(HTMLTableParser):
     """Рендеринг HTML-таблиц в Streamlit (inherits extraction from HTMLTableParser)"""
 
@@ -328,28 +331,30 @@ class HTMLTableRenderer(HTMLTableParser):
 
     def clean_html_table(self, table_html: str) -> str:
         """Очистка и форматирование HTML таблицы"""
-        table_html = re.sub(r'\s+', ' ', table_html)
+        table_html = re.sub(r"\s+", " ", table_html)
         table_html = table_html.strip()
-        if 'style=' not in table_html.lower():
+        if "style=" not in table_html.lower():
             table_html = table_html.replace(
-                '<table',
+                "<table",
                 '<table style="border-collapse: collapse; width: 100%; margin: 10px 0; background-color: white;"',
-                1
+                1,
             )
-        if 'border:' not in table_html.lower():
+        if "border:" not in table_html.lower():
             table_html = re.sub(
-                r'<td([^>]*)>',
+                r"<td([^>]*)>",
                 r'<td\1 style="border: 1px solid #ddd; padding: 8px; text-align: left; color: #333; background-color: white;">',
-                table_html
+                table_html,
             )
             table_html = re.sub(
-                r'<th([^>]*)>',
+                r"<th([^>]*)>",
                 r'<th\1 style="border: 1px solid #ddd; padding: 8px; text-align: left; background-color: #f8f9fa; font-weight: bold; color: #333;">',
-                table_html
+                table_html,
             )
         return table_html
 
-    def render_table_in_streamlit(self, table_html: str, title: Optional[str] = None) -> None:
+    def render_table_in_streamlit(
+        self, table_html: str, title: Optional[str] = None
+    ) -> None:
         """Рендеринг HTML таблицы в Streamlit"""
         if not _STREAMLIT_AVAILABLE:
             return
@@ -375,7 +380,12 @@ class HTMLTableRenderer(HTMLTableParser):
                 if st.button(f"📊 Показать данные", key=f"data_{table_id}"):
                     table_data = self.extract_table_data(table_html)
                     st.json(table_data)
-            st.text_area(f"HTML код таблицы {self.table_counter}:", clean_table, height=100, key=f"html_{table_id}")
+            st.text_area(
+                f"HTML код таблицы {self.table_counter}:",
+                clean_table,
+                height=100,
+                key=f"html_{table_id}",
+            )
 
     def process_dots_ocr_response(self, response_text: str) -> Dict[str, Any]:
         """Обработка ответа dots.ocr для поиска и рендеринга таблиц"""
@@ -383,7 +393,7 @@ class HTMLTableRenderer(HTMLTableParser):
         result: Dict[str, Any] = {
             "found_tables": len(html_tables),
             "tables": [],
-            "has_tables": len(html_tables) > 0
+            "has_tables": len(html_tables) > 0,
         }
         for i, table_html in enumerate(html_tables):
             table_info = {
@@ -391,7 +401,7 @@ class HTMLTableRenderer(HTMLTableParser):
                 "html": table_html,
                 "clean_html": self.clean_html_table(table_html),
                 "markdown": self.table_to_markdown(table_html),
-                "data": self.extract_table_data(table_html)
+                "data": self.extract_table_data(table_html),
             }
             result["tables"].append(table_info)
         return result
@@ -409,8 +419,7 @@ class HTMLTableRenderer(HTMLTableParser):
         st.success(f"📊 Найдено {result['found_tables']} таблиц в ответе")
         for table_info in result["tables"]:
             self.render_table_in_streamlit(
-                table_info["html"],
-                f"Таблица {table_info['index']}"
+                table_info["html"], f"Таблица {table_info['index']}"
             )
             if table_info["index"] < len(result["tables"]):
                 st.divider()
@@ -418,20 +427,24 @@ class HTMLTableRenderer(HTMLTableParser):
 
 # ─── XML Table Formatter ──────────────────────────────────────────────────────
 
+
 class XMLTableFormatter:
     """Форматировщик XML-таблиц для удобного отображения"""
 
     def __init__(self):
         self.parser = XMLTableParser()
 
-    def format_table_as_text(self, table_data: Dict[str, Any],
-                             separator: str = " | ",
-                             show_empty: bool = False) -> str:
+    def format_table_as_text(
+        self,
+        table_data: Dict[str, Any],
+        separator: str = " | ",
+        show_empty: bool = False,
+    ) -> str:
         """Форматирует таблицу как текст с разделителями"""
-        if 'data' not in table_data:
+        if "data" not in table_data:
             return ""
         lines = []
-        for row in table_data['data']:
+        for row in table_data["data"]:
             if not show_empty:
                 row = [cell for cell in row if cell.strip()]
             if row:
@@ -440,9 +453,9 @@ class XMLTableFormatter:
 
     def format_table_as_markdown(self, table_data: Dict[str, Any]) -> str:
         """Форматирует таблицу как Markdown"""
-        if 'data' not in table_data:
+        if "data" not in table_data:
             return ""
-        data = table_data['data']
+        data = table_data["data"]
         if not data:
             return ""
         lines = []
@@ -453,32 +466,38 @@ class XMLTableFormatter:
             formatted_row = [cell if cell.strip() else "—" for cell in row]
             while len(formatted_row) < len(header):
                 formatted_row.append("—")
-            lines.append("| " + " | ".join(formatted_row[:len(header)]) + " |")
+            lines.append("| " + " | ".join(formatted_row[: len(header)]) + " |")
         return "\n".join(lines)
 
     def format_payment_document(self, processed_data: Dict[str, Any]) -> str:
         """Специальное форматирование для платежных документов"""
         result = []
-        if 'header_info' in processed_data:
-            header = processed_data['header_info']
-            if 'organization' in header:
+        if "header_info" in processed_data:
+            header = processed_data["header_info"]
+            if "organization" in header:
                 result.append(f"Организация: {header['organization']}")
-            if 'address' in header:
+            if "address" in header:
                 result.append(f"Адрес: {header['address']}")
-            if 'document_type' in header:
+            if "document_type" in header:
                 result.append(f"Тип документа: {header['document_type']}")
             result.append("")
-        if 'extracted_fields' in processed_data:
-            fields = processed_data['extracted_fields']
+        if "extracted_fields" in processed_data:
+            fields = processed_data["extracted_fields"]
             result.append("Реквизиты:")
-            for key in ('inn', 'kpp', 'account', 'bik', 'recipient', 'bank'):
-                labels = {'inn': 'ИНН', 'kpp': 'КПП', 'account': 'Счет',
-                          'bik': 'БИК', 'recipient': 'Получатель', 'bank': 'Банк'}
+            for key in ("inn", "kpp", "account", "bik", "recipient", "bank"):
+                labels = {
+                    "inn": "ИНН",
+                    "kpp": "КПП",
+                    "account": "Счет",
+                    "bik": "БИК",
+                    "recipient": "Получатель",
+                    "bank": "Банк",
+                }
                 if key in fields:
                     result.append(f"  {labels[key]}: {fields[key]}")
             result.append("")
-        if 'tables' in processed_data:
-            for i, table in enumerate(processed_data['tables']):
+        if "tables" in processed_data:
+            for i, table in enumerate(processed_data["tables"]):
                 result.append(f"Таблица {i+1}:")
                 result.append(self.format_table_as_text(table, show_empty=False))
                 result.append("")
@@ -488,15 +507,15 @@ class XMLTableFormatter:
         """Извлекает пары ключ-значение из текста"""
         pairs: Dict[str, str] = {}
         patterns = [
-            r'ИНН\s*:?\s*(\d+)',
-            r'КПП\s*:?\s*(\d+)',
-            r'БИК\s*:?\s*(\d+)',
-            r'Сч\.\s*№?\s*:?\s*(\d+)',
-            r'Счет\s*№?\s*:?\s*(\d+)',
-            r'№\s*(\d+)',
-            r'от\s+(\d{1,2}[./]\d{1,2}[./]\d{2,4})',
+            r"ИНН\s*:?\s*(\d+)",
+            r"КПП\s*:?\s*(\d+)",
+            r"БИК\s*:?\s*(\d+)",
+            r"Сч\.\s*№?\s*:?\s*(\d+)",
+            r"Счет\s*№?\s*:?\s*(\d+)",
+            r"№\s*(\d+)",
+            r"от\s+(\d{1,2}[./]\d{1,2}[./]\d{2,4})",
         ]
-        field_names = ['ИНН', 'КПП', 'БИК', 'Счет', 'Счет', 'Номер', 'Дата']
+        field_names = ["ИНН", "КПП", "БИК", "Счет", "Счет", "Номер", "Дата"]
         for i, pattern in enumerate(patterns):
             matches = re.findall(pattern, text, re.IGNORECASE)
             if matches:
@@ -505,15 +524,15 @@ class XMLTableFormatter:
                     pairs[field_name] = matches[0]
         return pairs
 
-    def format_mixed_content(self, text: str,
-                             format_tables: bool = True,
-                             extract_fields: bool = True) -> str:
+    def format_mixed_content(
+        self, text: str, format_tables: bool = True, extract_fields: bool = True
+    ) -> str:
         """Форматирует смешанный контент (текст + XML таблицы)"""
         result = []
-        if '<table' in text.lower():
+        if "<table" in text.lower():
             analysis = analyze_ocr_output(text)
-            if format_tables and 'tables' in analysis:
-                for i, table in enumerate(analysis['tables']):
+            if format_tables and "tables" in analysis:
+                for i, table in enumerate(analysis["tables"]):
                     result.append(f"Таблица {i+1}:")
                     result.append(self.format_table_as_text(table, show_empty=False))
                     result.append("")
@@ -529,10 +548,12 @@ class XMLTableFormatter:
         return "\n".join(result)
 
 
-def format_ocr_result(text: str,
-                      format_type: str = "mixed",
-                      show_tables: bool = True,
-                      show_fields: bool = True) -> str:
+def format_ocr_result(
+    text: str,
+    format_type: str = "mixed",
+    show_tables: bool = True,
+    show_fields: bool = True,
+) -> str:
     """
     Быстрая функция для форматирования результата OCR
 
@@ -548,16 +569,16 @@ def format_ocr_result(text: str,
     formatter = XMLTableFormatter()
 
     if format_type == "clean":
-        clean_text = re.sub(r'<[^>]+>', ' ', text)
-        clean_text = re.sub(r'\s+', ' ', clean_text).strip()
+        clean_text = re.sub(r"<[^>]+>", " ", text)
+        clean_text = re.sub(r"\s+", " ", clean_text).strip()
         return clean_text
 
     elif format_type == "markdown":
-        if '<table' in text.lower():
+        if "<table" in text.lower():
             analysis = analyze_ocr_output(text)
             result_parts = []
-            if 'tables' in analysis:
-                for i, table in enumerate(analysis['tables']):
+            if "tables" in analysis:
+                for i, table in enumerate(analysis["tables"]):
                     result_parts.append(f"## Таблица {i+1}")
                     result_parts.append(formatter.format_table_as_markdown(table))
                     result_parts.append("")
@@ -566,7 +587,7 @@ def format_ocr_result(text: str,
             return text
 
     elif format_type == "payment":
-        if '<table' in text.lower():
+        if "<table" in text.lower():
             analysis = analyze_ocr_output(text)
             return formatter.format_payment_document(analysis)
         else:
@@ -578,21 +599,27 @@ def format_ocr_result(text: str,
 
 # ─── Export helpers (from ocr_output_processor) ───────────────────────────────
 
+
 def export_tables_to_excel(processed_data: Dict[str, Any], filename: str) -> bool:
     """Экспортирует таблицы в Excel файл"""
     import os
+
     if not _PANDAS_AVAILABLE:
         print("pandas is required for Excel export")
         return False
     filename = os.path.basename(filename)  # Prevent path traversal
     try:
-        tables = processed_data.get('processed_data', {}).get('tables') or processed_data.get('tables')
+        tables = processed_data.get("processed_data", {}).get(
+            "tables"
+        ) or processed_data.get("tables")
         if not tables:
             return False
-        with pd.ExcelWriter(filename, engine='openpyxl') as writer:
+        with pd.ExcelWriter(filename, engine="openpyxl") as writer:
             for i, table in enumerate(tables):
-                df = pd.DataFrame(table['data'])
-                df.to_excel(writer, sheet_name=f'Table_{i+1}', index=False, header=False)
+                df = pd.DataFrame(table["data"])
+                df.to_excel(
+                    writer, sheet_name=f"Table_{i+1}", index=False, header=False
+                )
         return True
     except Exception as e:
         print(f"Export error: {e}")
@@ -602,9 +629,10 @@ def export_tables_to_excel(processed_data: Dict[str, Any], filename: str) -> boo
 def export_to_json(processed_data: Dict[str, Any], filename: str) -> bool:
     """Экспортирует данные в JSON файл"""
     import os
+
     filename = os.path.basename(filename)  # Prevent path traversal
     try:
-        with open(filename, 'w', encoding='utf-8') as f:
+        with open(filename, "w", encoding="utf-8") as f:
             json.dump(processed_data, f, ensure_ascii=False, indent=2)
         return True
     except Exception as e:

@@ -3,7 +3,6 @@
 # Официальные промпты из репозитория dots.ocr
 dict_promptmode_to_prompt = {
     "ocr": "Extract all text from this image.",
-    
     "prompt_layout_all_en": """Please output the layout information from the PDF image, including each layout element's bbox, its category, and the corresponding text content within the bbox.
 
 1. Bbox format: [x1, y1, x2, y2]
@@ -16,5 +15,5 @@ dict_promptmode_to_prompt = {
 4. Constraints:
    - The output text must be the original text from the image, with no translation.
    - All layout elements must be sorted according to human reading order.
-5. Final Output: The entire output must be a single JSON object."""
+5. Final Output: The entire output must be a single JSON object.""",
 }

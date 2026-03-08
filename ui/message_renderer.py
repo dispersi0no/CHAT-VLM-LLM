@@ -1,8 +1,10 @@
 """Message rendering functions for the Streamlit chat interface."""
 
-import re
 import json
+import re
+
 import streamlit as st
+
 from utils.constants import CATEGORY_EMOJIS
 
 
@@ -25,7 +27,7 @@ def render_message_with_json_and_html_tables(content: str, role: str = "assistan
             return
 
         # Проверяем наличие готовых HTML таблиц - конвертируем в текст
-        elif '<table' in content.lower() and '</table>' in content.lower():
+        elif "<table" in content.lower() and "</table>" in content.lower():
             # Конвертируем HTML в текст
             text_content = convert_html_table_to_text(content)
 
@@ -44,14 +46,18 @@ def is_dots_ocr_json_response(content: str) -> bool:
 
     # Проверяем, начинается ли строка с JSON массива
     stripped_content = content.strip()
-    if stripped_content.startswith('[{') and stripped_content.endswith('}]'):
+    if stripped_content.startswith("[{") and stripped_content.endswith("}]"):
         try:
             # Пытаемся парсить как JSON
             data = json.loads(stripped_content)
             if isinstance(data, list) and len(data) > 0:
                 # Проверяем, что это BBOX данные
                 first_item = data[0]
-                if isinstance(first_item, dict) and 'bbox' in first_item and 'category' in first_item:
+                if (
+                    isinstance(first_item, dict)
+                    and "bbox" in first_item
+                    and "category" in first_item
+                ):
                     return True
         except Exception:
             pass
@@ -80,9 +86,9 @@ def convert_dots_ocr_json_to_text_table(content: str) -> str:
         text_elements = 0
 
         for item in data:
-            category = item.get('category', 'Unknown')
+            category = item.get("category", "Unknown")
             categories[category] = categories.get(category, 0) + 1
-            if item.get('text', '').strip():
+            if item.get("text", "").strip():
                 text_elements += 1
 
         # Отображаем статистику в колонках
@@ -100,7 +106,7 @@ def convert_dots_ocr_json_to_text_table(content: str) -> str:
         legend_cols = st.columns(min(len(categories), 4))
         for i, (category, count) in enumerate(sorted(categories.items())):
             col_idx = i % len(legend_cols)
-            emoji = CATEGORY_EMOJIS.get(category, '📄')
+            emoji = CATEGORY_EMOJIS.get(category, "📄")
             with legend_cols[col_idx]:
                 st.markdown(f"{emoji} **{category}**")
                 st.caption(f"Элементов: {count}")
@@ -109,9 +115,9 @@ def convert_dots_ocr_json_to_text_table(content: str) -> str:
         st.markdown("**📋 Детальная информация:**")
 
         for i, item in enumerate(data, 1):
-            bbox = item.get('bbox', [])
-            category = item.get('category', 'Unknown')
-            text = item.get('text', '')
+            bbox = item.get("bbox", [])
+            category = item.get("category", "Unknown")
+            text = item.get("text", "")
 
             # Форматируем BBOX координаты
             bbox_str = f"[{', '.join(map(str, bbox))}]" if bbox else "N/A"
@@ -121,7 +127,7 @@ def convert_dots_ocr_json_to_text_table(content: str) -> str:
                 text = text[:47] + "..."
 
             # Эмодзи для категории
-            emoji = CATEGORY_EMOJIS.get(category, '📄')
+            emoji = CATEGORY_EMOJIS.get(category, "📄")
 
             # Отображение элемента в контейнере
             with st.container():
@@ -157,7 +163,7 @@ def convert_html_table_to_text(content: str) -> str:
     """Конвертирует HTML таблицы в текстовый формат"""
 
     # Извлекаем все таблицы
-    table_pattern = r'<table[^>]*>(.*?)</table>'
+    table_pattern = r"<table[^>]*>(.*?)</table>"
     tables = re.findall(table_pattern, content, re.DOTALL | re.IGNORECASE)
 
     result_content = content
@@ -165,14 +171,14 @@ def convert_html_table_to_text(content: str) -> str:
     for table_html in tables:
         try:
             # Извлекаем строки
-            row_pattern = r'<tr[^>]*>(.*?)</tr>'
+            row_pattern = r"<tr[^>]*>(.*?)</tr>"
             rows = re.findall(row_pattern, table_html, re.DOTALL | re.IGNORECASE)
 
             text_rows = []
 
             for row in rows:
                 # Извлекаем ячейки (th или td)
-                cell_pattern = r'<t[hd][^>]*>(.*?)</t[hd]>'
+                cell_pattern = r"<t[hd][^>]*>(.*?)</t[hd]>"
                 cells = re.findall(cell_pattern, row, re.DOTALL | re.IGNORECASE)
 
                 if not cells:
@@ -181,8 +187,8 @@ def convert_html_table_to_text(content: str) -> str:
                 # Очищаем содержимое ячеек
                 clean_cells = []
                 for cell in cells:
-                    clean_cell = re.sub(r'<[^>]+>', '', cell)  # Убираем HTML теги
-                    clean_cell = clean_cell.strip().replace('\n', ' ')
+                    clean_cell = re.sub(r"<[^>]+>", "", cell)  # Убираем HTML теги
+                    clean_cell = clean_cell.strip().replace("\n", " ")
                     # Ограничиваем длину
                     if len(clean_cell) > 30:
                         clean_cell = clean_cell[:27] + "..."
@@ -196,15 +202,17 @@ def convert_html_table_to_text(content: str) -> str:
             text_table = "\n📊 **Таблица:**\n\n" + "\n".join(text_rows) + "\n\n"
 
             # Заменяем HTML таблицу на текст
-            full_table_pattern = f'<table[^>]*>{re.escape(table_html)}</table>'
-            result_content = re.sub(full_table_pattern, text_table, result_content, flags=re.IGNORECASE)
+            full_table_pattern = f"<table[^>]*>{re.escape(table_html)}</table>"
+            result_content = re.sub(
+                full_table_pattern, text_table, result_content, flags=re.IGNORECASE
+            )
 
         except Exception:
             # Если конвертация не удалась, просто убираем HTML теги
-            clean_table = re.sub(r'<[^>]+>', '', table_html)
+            clean_table = re.sub(r"<[^>]+>", "", table_html)
             result_content = result_content.replace(
-                f'<table>{table_html}</table>',
-                f"\n\n**📊 Таблица:**\n{clean_table}\n\n"
+                f"<table>{table_html}</table>",
+                f"\n\n**📊 Таблица:**\n{clean_table}\n\n",
             )
 
     return result_content

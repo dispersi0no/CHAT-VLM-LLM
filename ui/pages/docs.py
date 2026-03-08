@@ -7,7 +7,9 @@ def show_docs() -> None:
     """Render the 📚 Документация page."""
     st.header("📚 Документация")
 
-    doc_tabs = st.tabs(["🚀 Быстрый старт", "🤖 Модели", "🏗️ Архитектура", "📖 API", "🤝 Участие"])
+    doc_tabs = st.tabs(
+        ["🚀 Быстрый старт", "🤖 Модели", "🏗️ Архитектура", "📖 API", "🤝 Участие"]
+    )
 
     with doc_tabs[0]:
         st.markdown("""
@@ -43,8 +45,10 @@ def show_docs() -> None:
         - **Phi-3.5 Vision**: Мощная модель Microsoft для визуального анализа
         - **dots.ocr**: Специализированный парсер документов
         """)
-        
-        st.info("📖 Для подробных инструкций см. [QUICKSTART.md](https://github.com/dispersi0no/CHAT-VLM-LLM/blob/main/QUICKSTART.md)")
+
+        st.info(
+            "📖 Для подробных инструкций см. [QUICKSTART.md](https://github.com/dispersi0no/CHAT-VLM-LLM/blob/main/QUICKSTART.md)"
+        )
 
     with doc_tabs[1]:
         st.markdown("""
@@ -100,8 +104,10 @@ def show_docs() -> None:
         - ✅ Поддержка множества языков
         - ✅ JSON вывод
         """)
-        
-        st.info("📖 Для подробной документации см. [docs/models.md](https://github.com/dispersi0no/CHAT-VLM-LLM/blob/main/docs/models.md)")
+
+        st.info(
+            "📖 Для подробной документации см. [docs/models.md](https://github.com/dispersi0no/CHAT-VLM-LLM/blob/main/docs/models.md)"
+        )
 
     with doc_tabs[2]:
         st.markdown("""
@@ -128,8 +134,10 @@ def show_docs() -> None:
         - **UI**: Интерфейс Streamlit и стилизация
         - **Тесты**: Обеспечение качества
         """)
-        
-        st.info("📖 Для деталей архитектуры см. [docs/architecture.md](https://github.com/dispersi0no/CHAT-VLM-LLM/blob/main/docs/architecture.md)")
+
+        st.info(
+            "📖 Для деталей архитектуры см. [docs/architecture.md](https://github.com/dispersi0no/CHAT-VLM-LLM/blob/main/docs/architecture.md)"
+        )
 
     with doc_tabs[3]:
         st.markdown("""
@@ -191,7 +199,7 @@ def show_docs() -> None:
         - 🧪 Тесты
         - 🎨 Улучшения UI
         """)
-        
-        st.info("📖 Для руководящих принципов участия см. [CONTRIBUTING.md](https://github.com/dispersi0no/CHAT-VLM-LLM/blob/main/CONTRIBUTING.md)")
 
-
+        st.info(
+            "📖 Для руководящих принципов участия см. [CONTRIBUTING.md](https://github.com/dispersi0no/CHAT-VLM-LLM/blob/main/CONTRIBUTING.md)"
+        )

@@ -1,9 +1,10 @@
 """Custom CSS styles for Streamlit application."""
 
+
 def get_custom_css() -> str:
     """
     Get custom CSS for modern Streamlit UI.
-    
+
     Returns:
         CSS string for st.markdown
     """

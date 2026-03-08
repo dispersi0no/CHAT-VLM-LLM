@@ -1,8 +1,8 @@
 """Tests for utils/cache.py — JSON cache, expiration, decorator."""
 
-import time
-import tempfile
 import shutil
+import tempfile
+import time
 from pathlib import Path
 
 import pytest
@@ -77,6 +77,7 @@ class TestSimpleCache:
 
     def test_handles_non_serializable_with_default_str(self, tmp_cache):
         from datetime import datetime
+
         now = datetime.now()
         tmp_cache.set("dt", {"timestamp": now})
         result = tmp_cache.get("dt")

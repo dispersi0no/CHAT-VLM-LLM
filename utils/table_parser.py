@@ -3,20 +3,22 @@
 Consolidates xml_table_parser.py and the extraction part of html_table_renderer.py.
 """
 
-import re
 import html as html_module
-import xml.etree.ElementTree as ET
-from typing import List, Dict, Any, Optional, Union
-import pandas as pd
 import json
+import re
+import xml.etree.ElementTree as ET
 from dataclasses import dataclass
+from typing import Any, Dict, List, Optional, Union
 
+import pandas as pd
 
 # ─── Data classes ─────────────────────────────────────────────────────────────
+
 
 @dataclass
 class TableCell:
     """Ячейка таблицы"""
+
     content: str
     row: int
     col: int
@@ -27,6 +29,7 @@ class TableCell:
 @dataclass
 class ParsedTable:
     """Распарсенная таблица"""
+
     cells: List[TableCell]
     rows: int
     cols: int
@@ -35,13 +38,14 @@ class ParsedTable:
 
 # ─── XML Table Parser ─────────────────────────────────────────────────────────
 
+
 class XMLTableParser:
     """Парсер XML-таблиц из вывода OCR"""
 
     def __init__(self):
         self.table_patterns = [
-            r'<table[^>]*>(.*?)</table>',
-            r'<TABLE[^>]*>(.*?)</TABLE>'
+            r"<table[^>]*>(.*?)</table>",
+            r"<TABLE[^>]*>(.*?)</TABLE>",
         ]
 
     def extract_xml_tables(self, text: str) -> List[str]:
@@ -64,28 +68,25 @@ class XMLTableParser:
             max_row = 0
             max_col = 0
 
-            for row_idx, tr in enumerate(root.findall('.//tr')):
-                for col_idx, td in enumerate(tr.findall('.//td')):
+            for row_idx, tr in enumerate(root.findall(".//tr")):
+                for col_idx, td in enumerate(tr.findall(".//td")):
                     content = self._extract_cell_content(td)
-                    colspan = int(td.get('colspan', 1))
-                    rowspan = int(td.get('rowspan', 1))
+                    colspan = int(td.get("colspan", 1))
+                    rowspan = int(td.get("rowspan", 1))
 
                     cell = TableCell(
                         content=content,
                         row=row_idx,
                         col=col_idx,
                         colspan=colspan,
-                        rowspan=rowspan
+                        rowspan=rowspan,
                     )
                     cells.append(cell)
                     max_row = max(max_row, row_idx)
                     max_col = max(max_col, col_idx)
 
             return ParsedTable(
-                cells=cells,
-                rows=max_row + 1,
-                cols=max_col + 1,
-                metadata={}
+                cells=cells, rows=max_row + 1, cols=max_col + 1, metadata={}
             )
 
         except ET.ParseError as e:
@@ -97,10 +98,14 @@ class XMLTableParser:
 
     def _clean_xml(self, xml_content: str) -> str:
         """Очищает и исправляет XML"""
-        xml_content = re.sub(r'\s+', ' ', xml_content.strip())
-        xml_content = re.sub(r'<td([^>]*)>([^<]*?)(?=<td|</tr|</table|$)', r'<td\1>\2</td>', xml_content)
-        xml_content = re.sub(r'<tr([^>]*)>([^<]*?)(?=<tr|</table|$)', r'<tr\1>\2</tr>', xml_content)
-        if not xml_content.startswith('<table'):
+        xml_content = re.sub(r"\s+", " ", xml_content.strip())
+        xml_content = re.sub(
+            r"<td([^>]*)>([^<]*?)(?=<td|</tr|</table|$)", r"<td\1>\2</td>", xml_content
+        )
+        xml_content = re.sub(
+            r"<tr([^>]*)>([^<]*?)(?=<tr|</table|$)", r"<tr\1>\2</tr>", xml_content
+        )
+        if not xml_content.startswith("<table"):
             xml_content = f"<table>{xml_content}</table>"
         return xml_content
 
@@ -116,7 +121,9 @@ class XMLTableParser:
 
     def table_to_dataframe(self, parsed_table: ParsedTable) -> pd.DataFrame:
         """Конвертирует таблицу в pandas DataFrame"""
-        data_matrix = [["" for _ in range(parsed_table.cols)] for _ in range(parsed_table.rows)]
+        data_matrix = [
+            ["" for _ in range(parsed_table.cols)] for _ in range(parsed_table.rows)
+        ]
         for cell in parsed_table.cells:
             for r in range(cell.rowspan):
                 for c in range(cell.colspan):
@@ -132,18 +139,22 @@ class XMLTableParser:
             "rows": parsed_table.rows,
             "cols": parsed_table.cols,
             "cells": [],
-            "data": []
+            "data": [],
         }
         for cell in parsed_table.cells:
-            result["cells"].append({
-                "content": cell.content,
-                "row": cell.row,
-                "col": cell.col,
-                "colspan": cell.colspan,
-                "rowspan": cell.rowspan
-            })
+            result["cells"].append(
+                {
+                    "content": cell.content,
+                    "row": cell.row,
+                    "col": cell.col,
+                    "colspan": cell.colspan,
+                    "rowspan": cell.rowspan,
+                }
+            )
 
-        data_matrix = [["" for _ in range(parsed_table.cols)] for _ in range(parsed_table.rows)]
+        data_matrix = [
+            ["" for _ in range(parsed_table.cols)] for _ in range(parsed_table.rows)
+        ]
         for cell in parsed_table.cells:
             for r in range(cell.rowspan):
                 for c in range(cell.colspan):
@@ -157,31 +168,32 @@ class XMLTableParser:
 
 # ─── Payment Document Parser ──────────────────────────────────────────────────
 
+
 class PaymentDocumentParser(XMLTableParser):
     """Специализированный парсер для платежных документов"""
 
     def __init__(self):
         super().__init__()
         self.payment_fields = {
-            'inn': r'ИНН\s*(\d+)',
-            'kpp': r'КПП\s*(\d+)',
-            'account': r'(?:Сч\.|Счет)\s*№?\s*(\d+)',
-            'bik': r'БИК\s*(\d+)',
-            'recipient': r'Получатель[:\s]*([^<\n]+)',
-            'bank': r'Банк\s+получателя[:\s]*([^<\n]+)'
+            "inn": r"ИНН\s*(\d+)",
+            "kpp": r"КПП\s*(\d+)",
+            "account": r"(?:Сч\.|Счет)\s*№?\s*(\d+)",
+            "bik": r"БИК\s*(\d+)",
+            "recipient": r"Получатель[:\s]*([^<\n]+)",
+            "bank": r"Банк\s+получателя[:\s]*([^<\n]+)",
         }
 
     def parse_payment_document(self, text: str) -> Dict[str, Any]:
         """Парсит платежный документ"""
         result: Dict[str, Any] = {
-            'header_info': self._extract_header_info(text),
-            'tables': [],
-            'extracted_fields': self._extract_payment_fields(text)
+            "header_info": self._extract_header_info(text),
+            "tables": [],
+            "extracted_fields": self._extract_payment_fields(text),
         }
         for xml_table in self.extract_xml_tables(text):
             parsed_table = self.parse_table_xml(xml_table)
             if parsed_table:
-                result['tables'].append(self.table_to_dict(parsed_table))
+                result["tables"].append(self.table_to_dict(parsed_table))
         return result
 
     def _extract_header_info(self, text: str) -> Dict[str, str]:
@@ -189,13 +201,13 @@ class PaymentDocumentParser(XMLTableParser):
         header_info: Dict[str, str] = {}
         org_match = re.search(r'ООО\s+[«"]([^»"]+)[»"]', text)
         if org_match:
-            header_info['organization'] = org_match.group(0)
-        address_match = re.search(r'Адрес:\s*([^<\n]+)', text)
+            header_info["organization"] = org_match.group(0)
+        address_match = re.search(r"Адрес:\s*([^<\n]+)", text)
         if address_match:
-            header_info['address'] = address_match.group(1).strip()
-        doc_type_match = re.search(r'(Образец\s+заполнения\s+[^<\n]+)', text)
+            header_info["address"] = address_match.group(1).strip()
+        doc_type_match = re.search(r"(Образец\s+заполнения\s+[^<\n]+)", text)
         if doc_type_match:
-            header_info['document_type'] = doc_type_match.group(1).strip()
+            header_info["document_type"] = doc_type_match.group(1).strip()
         return header_info
 
     def _extract_payment_fields(self, text: str) -> Dict[str, str]:
@@ -210,14 +222,15 @@ class PaymentDocumentParser(XMLTableParser):
 
 # ─── HTML Table Parser (extraction only) ─────────────────────────────────────
 
+
 class HTMLTableParser:
     """Извлечение и парсинг HTML-таблиц (extraction-only, без рендеринга)"""
 
     def extract_html_tables(self, text: str) -> List[str]:
         """Извлечение HTML таблиц из текста"""
         table_patterns = [
-            r'<table[^>]*>.*?</table>',
-            r'<table>.*?</table>',
+            r"<table[^>]*>.*?</table>",
+            r"<table>.*?</table>",
         ]
         tables: List[str] = []
         for pattern in table_patterns:
@@ -233,7 +246,9 @@ class HTMLTableParser:
     def table_to_markdown(self, table_html: str) -> str:
         """Конвертация HTML таблицы в Markdown"""
         try:
-            rows = re.findall(r'<tr[^>]*>(.*?)</tr>', table_html, re.DOTALL | re.IGNORECASE)
+            rows = re.findall(
+                r"<tr[^>]*>(.*?)</tr>", table_html, re.DOTALL | re.IGNORECASE
+            )
             if not rows:
                 return "Не удалось извлечь строки таблицы"
 
@@ -241,12 +256,14 @@ class HTMLTableParser:
             is_header = True
 
             for row in rows:
-                cells = re.findall(r'<t[hd][^>]*>(.*?)</t[hd]>', row, re.DOTALL | re.IGNORECASE)
+                cells = re.findall(
+                    r"<t[hd][^>]*>(.*?)</t[hd]>", row, re.DOTALL | re.IGNORECASE
+                )
                 if not cells:
                     continue
                 clean_cells = []
                 for cell in cells:
-                    clean_cell = re.sub(r'<[^>]+>', '', cell)
+                    clean_cell = re.sub(r"<[^>]+>", "", cell)
                     clean_cell = html_module.unescape(clean_cell).strip()
                     clean_cells.append(clean_cell)
                 markdown_row = "| " + " | ".join(clean_cells) + " |"
@@ -263,7 +280,9 @@ class HTMLTableParser:
     def extract_table_data(self, table_html: str) -> Dict[str, Any]:
         """Извлечение структурированных данных из HTML таблицы"""
         try:
-            rows = re.findall(r'<tr[^>]*>(.*?)</tr>', table_html, re.DOTALL | re.IGNORECASE)
+            rows = re.findall(
+                r"<tr[^>]*>(.*?)</tr>", table_html, re.DOTALL | re.IGNORECASE
+            )
             if not rows:
                 return {"error": "Не найдено строк в таблице"}
 
@@ -271,16 +290,18 @@ class HTMLTableParser:
                 "headers": [],
                 "rows": [],
                 "total_rows": len(rows),
-                "total_columns": 0
+                "total_columns": 0,
             }
 
             for i, row in enumerate(rows):
-                cells = re.findall(r'<t[hd][^>]*>(.*?)</t[hd]>', row, re.DOTALL | re.IGNORECASE)
+                cells = re.findall(
+                    r"<t[hd][^>]*>(.*?)</t[hd]>", row, re.DOTALL | re.IGNORECASE
+                )
                 if not cells:
                     continue
                 clean_cells = []
                 for cell in cells:
-                    clean_cell = re.sub(r'<[^>]+>', '', cell)
+                    clean_cell = re.sub(r"<[^>]+>", "", cell)
                     clean_cell = html_module.unescape(clean_cell).strip()
                     clean_cells.append(clean_cell)
                 if i == 0:
@@ -296,7 +317,10 @@ class HTMLTableParser:
 
 # ─── Top-level helper ─────────────────────────────────────────────────────────
 
-def analyze_ocr_output(text: str, output_format: str = 'dict') -> Union[Dict[str, Any], str, 'pd.DataFrame']:
+
+def analyze_ocr_output(
+    text: str, output_format: str = "dict"
+) -> Union[Dict[str, Any], str, "pd.DataFrame"]:
     """
     Анализирует вывод OCR модели и обрабатывает XML-таблицы
 
@@ -307,34 +331,34 @@ def analyze_ocr_output(text: str, output_format: str = 'dict') -> Union[Dict[str
     Returns:
         Структурированные данные
     """
-    if 'платежн' in text.lower() or 'получатель' in text.lower():
+    if "платежн" in text.lower() or "получатель" in text.lower():
         pay_parser = PaymentDocumentParser()
         result = pay_parser.parse_payment_document(text)
     else:
         parser = XMLTableParser()
-        result = {'tables': [], 'raw_text': text}
+        result = {"tables": [], "raw_text": text}
         for xml_table in parser.extract_xml_tables(text):
             parsed_table = parser.parse_table_xml(xml_table)
             if parsed_table:
-                result['tables'].append(parser.table_to_dict(parsed_table))
+                result["tables"].append(parser.table_to_dict(parsed_table))
 
-    if output_format == 'json':
+    if output_format == "json":
         return json.dumps(result, ensure_ascii=False, indent=2)
-    elif output_format == 'dataframe' and result.get('tables'):
+    elif output_format == "dataframe" and result.get("tables"):
         xml_parser = XMLTableParser()
-        first_table = result['tables'][0]
-        cells = [TableCell(
-            content=cell['content'],
-            row=cell['row'],
-            col=cell['col'],
-            colspan=cell['colspan'],
-            rowspan=cell['rowspan']
-        ) for cell in first_table['cells']]
+        first_table = result["tables"][0]
+        cells = [
+            TableCell(
+                content=cell["content"],
+                row=cell["row"],
+                col=cell["col"],
+                colspan=cell["colspan"],
+                rowspan=cell["rowspan"],
+            )
+            for cell in first_table["cells"]
+        ]
         parsed = ParsedTable(
-            cells=cells,
-            rows=first_table['rows'],
-            cols=first_table['cols'],
-            metadata={}
+            cells=cells, rows=first_table["rows"], cols=first_table["cols"], metadata={}
         )
         return xml_parser.table_to_dataframe(parsed)
 

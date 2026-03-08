@@ -3,19 +3,19 @@
 import streamlit as st
 import yaml
 
-from ui.styles import get_custom_css
-from ui.sidebar import render_sidebar
-from ui.pages.home import show_home
-from ui.pages.ocr import show_ocr
 from ui.pages.chat import show_chat
 from ui.pages.docs import show_docs
+from ui.pages.home import show_home
+from ui.pages.ocr import show_ocr
+from ui.sidebar import render_sidebar
+from ui.styles import get_custom_css
 
 # ── Page configuration (must be first Streamlit call) ──────────────────────
 st.set_page_config(
     page_title="ChatVLMLLM - Распознавание документов и чат с VLM",
     page_icon="🔬",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="expanded",
 )
 
 # ── CSS injection ───────────────────────────────────────────────────────────

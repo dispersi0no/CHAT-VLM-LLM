@@ -4,16 +4,16 @@ import io
 import time
 
 import pytest
-from PIL import Image
 from fastapi import HTTPException, UploadFile
 from fastapi.testclient import TestClient
+from PIL import Image
 
 from api import RateLimiter, SecurityConfig, app, rate_limiter, validate_file
-
 
 # =============================================================================
 # Helpers
 # =============================================================================
+
 
 def make_image_bytes(fmt="PNG", size=(100, 100)):
     """Create a valid image in memory."""
@@ -47,6 +47,7 @@ def reset_rate_limiter():
 # =============================================================================
 # RateLimiter
 # =============================================================================
+
 
 class TestRateLimiter:
     """Tests for RateLimiter class."""
@@ -103,6 +104,7 @@ class TestRateLimiter:
 # SecurityConfig
 # =============================================================================
 
+
 class TestSecurityConfig:
     """Tests for SecurityConfig defaults."""
 
@@ -118,6 +120,7 @@ class TestSecurityConfig:
 # =============================================================================
 # File Validation
 # =============================================================================
+
 
 class TestValidateFile:
     """Tests for validate_file function."""
@@ -167,6 +170,7 @@ class TestValidateFile:
 # =============================================================================
 # API Endpoints (no model required)
 # =============================================================================
+
 
 class TestEndpointsNoModel:
     """Endpoints that don't require model loading."""
@@ -218,6 +222,7 @@ class TestEndpointsNoModel:
 # =============================================================================
 # Rate Limiting on Endpoints
 # =============================================================================
+
 
 class TestEndpointRateLimiting:
     """Test rate limiting on protected endpoints."""

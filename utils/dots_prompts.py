@@ -3,7 +3,6 @@
 # Официальные промпты из репозитория dots.ocr
 dict_promptmode_to_prompt = {
     "ocr": "Extract all text from this image.",
-
     "layout_all": """Please output the layout information from the PDF image, including each layout element's bbox, its category, and the corresponding text content within the bbox.
 
 1. Bbox format: [x1, y1, x2, y2]
@@ -20,4 +19,6 @@ dict_promptmode_to_prompt = {
 }
 
 # Alias — same prompt, kept for backward compatibility
-dict_promptmode_to_prompt["prompt_layout_all_en"] = dict_promptmode_to_prompt["layout_all"]
+dict_promptmode_to_prompt["prompt_layout_all_en"] = dict_promptmode_to_prompt[
+    "layout_all"
+]
