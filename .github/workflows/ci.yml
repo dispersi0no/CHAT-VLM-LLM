@@ -33,11 +33,11 @@ jobs:
         python -m pip install --upgrade pip
         pip install pytest pytest-cov flake8 black isort mypy httpx
         pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
-        pip install transformers==4.47.1 accelerate==1.2.1 qwen-vl-utils==0.0.14
+        pip install transformers==4.48.0 accelerate==1.2.1 qwen-vl-utils==0.0.14
         pip install bitsandbytes==0.45.0
-        pip install fastapi==0.115.6 uvicorn==0.34.0 python-multipart==0.0.19
+        pip install fastapi==0.115.6 uvicorn==0.34.0 python-multipart==0.0.22
         pip install streamlit==1.41.1
-        pip install pillow==11.1.0 pyyaml==6.0.2 requests==2.32.3 numpy==1.26.4 pandas==2.2.3
+        pip install pillow==12.1.1 pyyaml==6.0.2 requests==2.32.3 numpy==1.26.4 pandas==2.2.3
         pip install opencv-python-headless==4.10.0.84
     
     - name: Lint with flake8
