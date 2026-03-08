@@ -3,8 +3,11 @@
 REST API для Vision-Language Models OCR и чата.
 
 Использование:
-    uvicorn api:app --host 0.0.0.0 --port 8001 --reload
-    
+    uvicorn api:app --host 0.0.0.0 --port 8001 --workers 1
+
+ВАЖНО: запускайте с --workers 1.
+Несколько воркеров вызовут конфликт кешей моделей в памяти GPU.
+
 Документация: http://localhost:8001/docs
 """
 
@@ -65,18 +68,39 @@ security_config = SecurityConfig()
 # =============================================================================
 
 class RateLimiter:
-    """Простой rate limiter на основе IP."""
+    """Простой rate limiter на основе IP.
+
+    Примечание: безопасен только при запуске с 1 воркером (--workers 1).
+    Состояние хранится в памяти процесса и не разделяется между воркерами.
+    """
     
+    _CLEANUP_INTERVAL: int = 300  # 5 минут
+
     def __init__(self, requests_per_minute: int = 60):
         self.requests_per_minute = requests_per_minute
         self.requests: Dict[str, List[float]] = defaultdict(list)
+        self._last_cleanup: float = time.time()
     
+    def _maybe_cleanup(self) -> None:
+        """Периодически удалять IP-записи без недавней активности."""
+        now = time.time()
+        if now - self._last_cleanup < self._CLEANUP_INTERVAL:
+            return
+        minute_ago = now - 60
+        stale_keys = [
+            ip for ip, timestamps in self.requests.items()
+            if not any(t > minute_ago for t in timestamps)
+        ]
+        for ip in stale_keys:
+            del self.requests[ip]
+        self._last_cleanup = now
+
     def is_allowed(self, client_ip: str) -> bool:
         """Проверка, разрешён ли запрос."""
         now = time.time()
         minute_ago = now - 60
         
-        # Очистка старых записей
+        # Очистка старых записей текущего IP
         self.requests[client_ip] = [
             t for t in self.requests[client_ip] if t > minute_ago
         ]
@@ -87,6 +111,9 @@ class RateLimiter:
         
         # Запись нового запроса
         self.requests[client_ip].append(now)
+
+        # Периодическая очистка устаревших IP-записей
+        self._maybe_cleanup()
         return True
     
     def get_remaining(self, client_ip: str) -> int:
@@ -136,7 +163,6 @@ def validate_file(file: UploadFile, content: bytes) -> None:
     try:
         image = Image.open(io.BytesIO(content))
         image.verify()
-        # verify() закрывает поток, поэтому повторно открываем изображение для дальнейшей обработки
         image = Image.open(io.BytesIO(content))
     except Exception as e:
         raise HTTPException(
@@ -146,7 +172,7 @@ def validate_file(file: UploadFile, content: bytes) -> None:
 
 
 async def rate_limit_check(request: Request):
-    """Dependency для проверки rate limit."""
+    """Зависимость для проверки rate limit."""
     client_ip = request.client.host if request.client else "unknown"
     
     if not rate_limiter.is_allowed(client_ip):
@@ -247,13 +273,9 @@ async def health_check():
 @app.get("/models")
 async def list_models():
     """Список доступных моделей."""
+    from models import ModelLoader
     return {
-        "available": [
-            {"id": "got_ocr", "name": "GOT-OCR 2.0", "params": "580M", "vram_fp16": "3GB"},
-            {"id": "qwen_vl_2b", "name": "Qwen2-VL 2B", "params": "2B", "vram_fp16": "4.7GB"},
-            {"id": "qwen3_vl_2b", "name": "Qwen3-VL 2B", "params": "2B", "vram_fp16": "4.4GB"},
-            {"id": "dots_ocr", "name": "dots.ocr", "params": "1.7B", "vram_bf16": "8GB"},
-        ],
+        "available": ModelLoader.get_available_models(),
         "loaded": list(model_cache.keys())
     }
 
@@ -277,7 +299,6 @@ async def extract_text(
         Извлечённый текст с метаданными
     """
     try:
-        # Чтение и валидация файла
         image_data = await file.read()
         validate_file(file, image_data)
         
@@ -288,20 +309,15 @@ async def extract_text(
         model_instance = get_model(model)
         start_time = time.time()
         
-        # Обработка в зависимости от типа модели
-        if "qwen3" in model:
-            text = model_instance.extract_text(image, language=language)
-        elif "qwen" in model:
-            text = model_instance.chat(image, "Extract all text from this document.")
-        elif model == "dots_ocr":
-            result = model_instance.parse_document(image, return_json=False)
-            text = result.get('raw_text', str(result))
-        else:  # GOT-OCR
-            text = model_instance.process_image(image)
+        # Единый dispatch через BaseModel.run()
+        if language:
+            ocr_prompt = f"Extract all text from this document. Language hint: {language}"
+        else:
+            ocr_prompt = "Extract all text from this document."
+        text = model_instance.run(image, prompt=ocr_prompt)
         
         processing_time = time.time() - start_time
         
-        # Добавление заголовка с оставшимися запросами
         client_ip = request.client.host if request.client else "unknown"
         remaining = rate_limiter.get_remaining(client_ip)
         
@@ -346,7 +362,6 @@ async def chat_with_image(
         Ответ модели
     """
     try:
-        # Чтение и валидация файла
         image_data = await file.read()
         validate_file(file, image_data)
         
@@ -354,23 +369,13 @@ async def chat_with_image(
         if image.mode != 'RGB':
             image = image.convert('RGB')
         
-        # Санитизация промпта
-        prompt = prompt.strip()[:2000]  # Ограничение длины промпта
+        prompt = prompt.strip()[:2000]
         
         model_instance = get_model(model)
         start_time = time.time()
         
-        if "qwen" in model:
-            response = model_instance.chat(
-                image=image,
-                prompt=prompt,
-                temperature=temperature,
-                max_new_tokens=max_tokens
-            )
-        elif model == "dots_ocr":
-            response = str(model_instance.process_image(image, prompt=prompt))
-        else:  # GOT-OCR
-            response = model_instance.process_image(image)
+        # Единый dispatch через BaseModel.run()
+        response = model_instance.run(image, prompt=prompt, temperature=temperature, max_new_tokens=max_tokens)
         
         processing_time = time.time() - start_time
         
@@ -410,7 +415,6 @@ async def batch_ocr(
     Returns:
         Список результатов
     """
-    # Проверка количества файлов
     if len(files) > security_config.MAX_BATCH_SIZE:
         raise HTTPException(
             status_code=400,
@@ -431,12 +435,8 @@ async def batch_ocr(
             model_instance = get_model(model)
             start_time = time.time()
             
-            if "qwen3" in model:
-                text = model_instance.extract_text(image)
-            elif "qwen" in model:
-                text = model_instance.chat(image, "Extract all text.")
-            else:
-                text = model_instance.process_image(image)
+            # Единый dispatch через BaseModel.run()
+            text = model_instance.run(image, prompt="Extract all text from this document.")
             
             processing_time = time.time() - start_time
             
@@ -487,7 +487,6 @@ async def unload_model(model_name: str):
                 model.unload()
             del model_cache[model_name]
             
-            # Очистка CUDA кеша
             try:
                 import torch
                 if torch.cuda.is_available():

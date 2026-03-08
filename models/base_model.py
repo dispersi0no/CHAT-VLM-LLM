@@ -115,8 +115,6 @@ class BaseModel(ABC):
         result = {}
         
         for field in fields:
-            # Basic field extraction logic
-            # TODO: Implement more sophisticated extraction
             result[field] = self._extract_single_field(text, field)
         
         return result
@@ -132,14 +130,11 @@ class BaseModel(ABC):
         Returns:
             Extracted field value or empty string
         """
-        # Simple keyword-based extraction
-        # In production, use NER or structured prompting
         lines = text.split('\n')
         field_lower = field.lower()
         
         for i, line in enumerate(lines):
             if field_lower in line.lower():
-                # Try to extract value after colon or on next line
                 if ':' in line:
                     parts = line.split(':', 1)
                     if len(parts) > 1:
@@ -149,7 +144,35 @@ class BaseModel(ABC):
         
         return ""
     
-    def chat(self, image: Image.Image, message: str, history: List[Dict[str, str]] = None) -> str:
+    def run(self, image: Image.Image, prompt: Optional[str] = None, **kwargs) -> str:
+        """
+        Unified entry point for model inference.
+
+        Replaces the scattered if/elif dispatch chains in api.py.
+        Subclasses may override this method for model-specific routing
+        (e.g. routing to ``extract_text`` or ``parse_document``).
+
+        Routing logic:
+        - If ``prompt`` and generation kwargs (temperature, max_new_tokens,
+          etc.) are provided, delegates to :meth:`chat` so that subclass
+          overrides receive those parameters.
+        - Otherwise falls back to :meth:`process_image`.
+
+        Args:
+            image: PIL Image object
+            prompt: Optional prompt / question for the model
+            **kwargs: Additional keyword arguments forwarded to
+                      :meth:`chat` (e.g. ``language``, ``temperature``,
+                      ``max_new_tokens``).
+
+        Returns:
+            Model output text
+        """
+        if prompt and kwargs:
+            return self.chat(image=image, message=prompt, **kwargs)
+        return self.process_image(image, prompt)
+
+    def chat(self, image: Image.Image, message: str, history: List[Dict[str, str]] = None, **kwargs) -> str:
         """
         Interactive chat with image context.
         
@@ -157,6 +180,9 @@ class BaseModel(ABC):
             image: Context image
             message: User message
             history: Chat history
+            **kwargs: Generation parameters (temperature, max_new_tokens,
+                      top_p, etc.). Subclasses that support these should
+                      extract and forward them to the underlying model.
             
         Returns:
             Model response
