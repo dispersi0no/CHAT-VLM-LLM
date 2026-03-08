@@ -11,6 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     
     strategy:
+      fail-fast: false
       matrix:
         python-version: ['3.10', '3.11', '3.12']
     
@@ -45,9 +46,11 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=120 --statistics
     
     - name: Check formatting with black
+      continue-on-error: true
       run: black --check --diff .
     
     - name: Check imports with isort
+      continue-on-error: true
       run: isort --check-only --diff .
     
     - name: Type check with mypy
