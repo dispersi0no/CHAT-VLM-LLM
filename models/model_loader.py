@@ -302,7 +302,32 @@ class ModelLoader:
     def get_loaded_models(cls) -> list[str]:
         """Get list of currently loaded models."""
         return list(cls._loaded_models.keys())
-    
+
+    @classmethod
+    def get_available_models(cls) -> list[dict]:
+        """Get list of all models registered in MODEL_REGISTRY with metadata from config.
+
+        Returns a list of dicts, each containing at least ``id`` and any
+        additional fields present in config.yaml (name, model_path, params,
+        precision).  This preserves the /models API response format that
+        clients expect.
+        """
+        try:
+            config = cls.load_config()
+            models_config = cls._get_models_section(config)
+        except Exception:
+            models_config = {}
+
+        result: list[dict] = []
+        for model_key in cls.MODEL_REGISTRY:
+            entry: dict = {"id": model_key}
+            mc = models_config.get(model_key, {})
+            for field in ("name", "model_path", "params", "precision"):
+                if field in mc:
+                    entry[field] = mc[field]
+            result.append(entry)
+        return result
+
     @classmethod
     def is_model_loaded(cls, model_key: str) -> bool:
         """Check if model is loaded."""
