@@ -29,7 +29,7 @@ class TestModelLoader:
     def test_load_config(self, config_path):
         """Test configuration loading."""
         config = ModelLoader.load_config()
-        assert "models" in config or "transformers" in config
+        assert "transformers" in config
         assert "ocr" in config
     
     def test_get_available_models(self, config_path):
@@ -42,7 +42,8 @@ class TestModelLoader:
     def test_model_configuration(self, config_path):
         """Test model configuration structure."""
         config = ModelLoader.load_config()
-        for model_key, model_config in config["models"].items():
+        models_section = ModelLoader._get_models_section(config)
+        for model_key, model_config in models_section.items():
             assert "name" in model_config
             assert "model_path" in model_config
             assert "precision" in model_config

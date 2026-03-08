@@ -19,7 +19,6 @@ import io
 import time
 import logging
 import os
-# import magic  # python-magic для определения MIME-типа - временно отключено для Windows
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -132,20 +131,7 @@ def validate_file(file: UploadFile, content: bytes) -> None:
                 detail=f"Недопустимое расширение файла. Разрешены: {', '.join(security_config.ALLOWED_EXTENSIONS)}"
             )
     
-    # Проверка MIME-типа (более надёжная проверка по содержимому)
-    # Временно отключено для Windows из-за проблем с libmagic
-    # try:
-    #     mime = magic.from_buffer(content, mime=True)
-    #     if mime not in security_config.ALLOWED_MIME_TYPES:
-    #         raise HTTPException(
-    #             status_code=400,
-    #             detail=f"Недопустимый тип файла: {mime}. Разрешены: изображения (JPEG, PNG, BMP, TIFF, WebP)"
-    #         )
-    # except Exception as e:
-    #     logger.warning(f"Не удалось определить MIME-тип: {e}")
-    #     # Fallback на проверку PIL
-    #     pass
-    
+    # Проверка MIME-типа через PIL (надёжная проверка по содержимому)
     # Проверка, что файл является валидным изображением
     try:
         image = Image.open(io.BytesIO(content))

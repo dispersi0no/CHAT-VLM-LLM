@@ -105,11 +105,19 @@ class ModelLoader:
             return yaml.safe_load(f)
     
     @classmethod
+    def _get_models_section(cls, config: dict) -> dict:
+        """Return the active models section (transformers: preferred, models: as fallback).
+        
+        An empty or missing transformers section falls back to models:.
+        """
+        return config.get("transformers") or config.get("models", {})
+
+    @classmethod
     def check_model_cache(cls, model_key: str) -> tuple[bool, Optional[str]]:
         """Check if model is in cache."""
         config = cls.load_config()
         
-        models_config = config.get("models", {})
+        models_config = cls._get_models_section(config)
         if model_key not in models_config:
             return False, f"Model '{model_key}' not found in config"
         
@@ -183,7 +191,7 @@ class ModelLoader:
         
         # Load configuration
         config = cls.load_config()
-        models_config = config.get("models", {})
+        models_config = cls._get_models_section(config)
         
         if model_key not in models_config:
             raise ValueError(f"Model '{model_key}' not found in config.yaml")
