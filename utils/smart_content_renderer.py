@@ -96,19 +96,19 @@ class SmartContentRenderer:
             if i < len(tables):
                 try:
                     # Импортируем рендерер таблиц
-                    from utils.html_table_renderer import HTMLTableRenderer
-                    
+                    from utils.table_renderer import HTMLTableRenderer
+
                     renderer = HTMLTableRenderer()
-                    
+
                     # Простое отображение таблицы без дополнительных опций для чата
                     clean_table = renderer.clean_html_table(tables[i])
                     container.markdown("**📊 Таблица:**")
                     container.markdown(clean_table, unsafe_allow_html=True)
-                        
+
                 except Exception as e:
-                    # Fallback - отображаем как HTML с unsafe_allow_html
+                    # Fallback — отображаем таблицу напрямую
                     container.markdown(f"**📊 Таблица:**")
-                    container.markdown(html_module.escape(str(tables[i])), unsafe_allow_html=True)
+                    container.markdown(tables[i], unsafe_allow_html=True)
     
     @staticmethod
     def render_message_content(message: dict, container=None) -> None:

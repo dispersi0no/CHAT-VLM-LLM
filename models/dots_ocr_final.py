@@ -21,10 +21,10 @@ import sys
 from models.base_model import BaseModel
 from utils.logger import logger
 
-# Импорт процессора XML-таблиц
+# Импорт парсера XML-таблиц
 try:
-    from utils.ocr_output_processor import OCROutputProcessor
-    from utils.xml_formatter import format_ocr_result
+    from utils.table_parser import XMLTableParser, analyze_ocr_output
+    from utils.table_renderer import format_ocr_result
     XML_PROCESSOR_AVAILABLE = True
 except ImportError:
     XML_PROCESSOR_AVAILABLE = False
@@ -40,11 +40,11 @@ class DotsOCRFinalModel(BaseModel):
         self.processor = None
         self.max_new_tokens = config.get('max_new_tokens', 2048)  # Уменьшено для стабильности
         
-        # Инициализация XML-процессора
+        # Инициализация XML-парсера
         if XML_PROCESSOR_AVAILABLE:
-            self.xml_processor = OCROutputProcessor()
+            self.xml_parser = XMLTableParser()
         else:
-            self.xml_processor = None
+            self.xml_parser = None
         
         # Настройки обработки XML
         self.process_xml_tables = config.get('process_xml_tables', True)
@@ -289,19 +289,13 @@ class DotsOCRFinalModel(BaseModel):
                 process_xml = self.process_xml_tables
             
             # Обработка XML-таблиц если включена
-            if (self.xml_processor and 
-                process_xml and 
-                result and 
+            if (XML_PROCESSOR_AVAILABLE and
+                process_xml and
+                result and
                 ('<table' in result.lower() or '<tr' in result.lower())):
-                
+
                 logger.info("Processing XML tables in output")
-                processed_data = self.xml_processor.process_ocr_output(
-                    text=result,
-                    model_name=self.model_name,
-                    extract_tables=True,
-                    extract_fields=self.extract_structured_fields,
-                    output_format='structured'
-                )
+                processed_data = analyze_ocr_output(result)
                 
                 # Возвращаем структурированные данные для режимов с XML
                 if mode in ['table_extraction', 'structured_simple', 'document_parsing']:
@@ -378,14 +372,8 @@ class DotsOCRFinalModel(BaseModel):
                 return result
             
             # Если XML не обнаружен, пытаемся извлечь поля вручную
-            if self.xml_processor:
-                processed = self.xml_processor.process_ocr_output(
-                    text=result,
-                    model_name=self.model_name,
-                    extract_tables=True,
-                    extract_fields=True,
-                    output_format='structured'
-                )
+            if XML_PROCESSOR_AVAILABLE:
+                processed = analyze_ocr_output(result)
                 processed['document_type'] = 'payment_document'
                 return processed
             
