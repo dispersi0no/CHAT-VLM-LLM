@@ -145,19 +145,3 @@ class GOTOCRModel(BaseModel):
         # Return OCR result with prompt context
         ocr_result = self.process_image(image)
         return f"OCR Result:\n{ocr_result}"
-
-    def unload(self) -> None:
-        """Unload model from memory."""
-        if self.model is not None:
-            del self.model
-            self.model = None
-
-        if self.tokenizer is not None:
-            del self.tokenizer
-            self.tokenizer = None
-
-        # Clear CUDA cache if available
-        if torch.cuda.is_available():
-            torch.cuda.empty_cache()
-
-        logger.info("GOT-OCR model unloaded")

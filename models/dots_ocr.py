@@ -430,29 +430,6 @@ class DotsOCRModel(BaseModel):
         """Получить структурированный результат с XML-обработкой"""
         return self.process_image(image, mode="structured_simple", process_xml=True)
 
-    def unload(self) -> None:
-        """Выгружаем модель."""
-        try:
-            if self.model is not None:
-                del self.model
-                self.model = None
-            if self.processor is not None:
-                del self.processor
-                self.processor = None
-
-            # Безопасная очистка CUDA кеша
-            if torch.cuda.is_available():
-                try:
-                    torch.cuda.empty_cache()
-                    torch.cuda.synchronize()
-                except Exception as e:
-                    logger.warning(f"Warning during CUDA cleanup: {e}")
-
-            logger.info("dots.ocr unloaded successfully")
-
-        except Exception as e:
-            logger.warning(f"Warning during model unload: {e}")
-
 
 # Backward compatibility alias
 DotsOCRFinalModel = DotsOCRModel
