@@ -4,7 +4,7 @@ transformers==4.47.1
 accelerate==1.2.1
 
 # VLM specific
-qwen-vl-utils
+qwen-vl-utils==0.0.14
 flash-attn==2.7.3
 bitsandbytes==0.45.0
 
