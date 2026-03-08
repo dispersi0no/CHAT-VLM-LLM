@@ -101,8 +101,7 @@ CHAT-VLM-LLM/
 │
 ├── examples/             # Example documents for testing
 ├── notebooks/            # Jupyter notebooks
-├── dots_ocr/             # dots.ocr integration module
-│
+
 ├── Dockerfile            # Full image (Streamlit + FastAPI, CUDA cu126)
 ├── Dockerfile.light      # Lightweight image without GPU deps
 ├── docker-compose.yml    # Standard stack (Streamlit + Nginx)

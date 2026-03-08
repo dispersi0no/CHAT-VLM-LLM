@@ -1,1 +1,0 @@
-# dots_ocr package
