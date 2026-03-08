@@ -408,7 +408,7 @@ def create_vllm_interface():
         col1, col2 = st.columns([1, 1])
         
         with col1:
-            st.image(image, caption="Загруженное изображение", use_column_width=True)
+            st.image(image, caption="Загруженное изображение", use_container_width=True)
             st.info(f"📏 Размер: {image.size[0]}x{image.size[1]}")
         
         with col2:
