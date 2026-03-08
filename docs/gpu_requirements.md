@@ -8,26 +8,26 @@
 
 ### Потребление VRAM по моделям
 
-| Модель | FP16 | BF16 | INT8 | INT4 |
-|--------|------|------|------|------|
-| GOT-OCR 2.0 | 3 GB | 3 GB | 2 GB | - |
-| Qwen2-VL 2B | 4.7 GB | 4.7 GB | 3.6 GB | - |
-| Qwen2-VL 7B | 16.1 GB | 16.1 GB | 10.1 GB | - |
-| Qwen3-VL 2B | 4.4 GB | 4.4 GB | 2.2 GB | 1.5 GB |
-| Qwen3-VL 4B | 8.9 GB | 8.9 GB | 3.8 GB | 3 GB |
-| Qwen3-VL 8B | 17.6 GB | 17.6 GB | 10 GB | 6 GB |
-| dots.ocr | 8 GB | 8 GB | 6 GB | - |
+| Модель | Режим | FP16 / BF16 | INT8 |
+|--------|-------|-------------|------|
+| GOT-OCR 2.0 | transformers | 3 GB | 2 GB |
+| Qwen2-VL 2B | transformers | 4.7 GB | 3.6 GB |
+| Qwen2-VL 2B | vllm | 6.0 GB | — |
+| Qwen3-VL 2B | transformers | 4.4 GB | 2.2 GB |
+| Qwen3-VL 2B | vllm | 6.5 GB | — |
+| Phi-3.5 Vision | vllm | 8.0 GB | — |
+| dots.ocr | vllm | 4.5 GB | — |
+| Qwen2-VL 7B | vllm | 16.0 GB | — |
 
 ### Рекомендации по GPU
 
-| VRAM | Рекомендуемые модели | Квантизация |
-|------|---------------------|-------------|
-| 4 GB | GOT-OCR, Qwen3-VL 2B@INT4 | INT4/INT8 |
-| 6 GB | Qwen3-VL 2B, Qwen3-VL 4B@INT4 | INT8/INT4 |
-| 8 GB | Qwen3-VL 4B@INT8, dots.ocr@INT8 | INT8 |
-| 12 GB | Qwen3-VL 4B@FP16, Qwen3-VL 8B@INT8 | FP16/INT8 |
-| 16 GB | Qwen3-VL 8B@INT8, Qwen2-VL 7B@INT8 | INT8/FP16 |
-| 24 GB+ | Все модели@FP16 | FP16/BF16 |
+| VRAM | Рекомендуемые модели | Примечание |
+|------|---------------------|------------|
+| 4 GB | GOT-OCR (экспериментальная), Qwen3-VL 2B@INT8 | Только экспериментально |
+| 6 GB | Qwen3-VL 2B (transformers), dots.ocr (vllm) | Стабильный вариант |
+| 8 GB | Qwen2-VL 2B (transformers/vllm), Phi-3.5 (vllm) | Хороший баланс |
+| 16 GB+ | Qwen2-VL 7B (vllm) | Тяжёлые задачи |
+| 24 GB+ | Все модели | Без ограничений |
 
 ## Популярные видеокарты
 
@@ -35,10 +35,10 @@
 
 | GPU | VRAM | Лучшие модели | Примечания |
 |-----|------|---------------|------------|
-| RTX 5090 | 32 GB | Qwen3-VL 8B@FP16 | Все модели без ограничений |
-| RTX 5080 | 16 GB | Qwen3-VL 8B@INT8 | Оптимальный выбор |
-| RTX 5070 Ti | 16 GB | Qwen3-VL 8B@INT8 | Отличная производительность |
-| RTX 5070 | 12 GB | Qwen3-VL 4B@FP16 | Хороший баланс |
+| RTX 5090 | 32 GB | Все модели@FP16 | Без ограничений |
+| RTX 5080 | 16 GB | Qwen2-VL 7B@vLLM | Оптимальный выбор |
+| RTX 5070 Ti | 16 GB | Qwen2-VL 7B@vLLM | Отличная производительность |
+| RTX 5070 | 12 GB | Phi-3.5@vLLM, dots.ocr@vLLM | Хороший баланс |
 | RTX 5060 Ti | 16/8 GB | Зависит от версии | 16GB версия предпочтительна |
 
 ### NVIDIA GeForce RTX 40-серия
@@ -46,24 +46,24 @@
 | GPU | VRAM | Лучшие модели |
 |-----|------|---------------|
 | RTX 4090 | 24 GB | Все модели@FP16 |
-| RTX 4080 Super | 16 GB | Qwen3-VL 8B@INT8 |
-| RTX 4080 | 16 GB | Qwen3-VL 8B@INT8 |
-| RTX 4070 Ti Super | 16 GB | Qwen3-VL 8B@INT8 |
-| RTX 4070 Ti | 12 GB | Qwen3-VL 4B@FP16 |
-| RTX 4070 | 12 GB | Qwen3-VL 4B@FP16 |
-| RTX 4060 Ti | 16/8 GB | Qwen3-VL 4B@INT8/INT4 |
-| RTX 4060 | 8 GB | Qwen3-VL 2B@FP16 |
+| RTX 4080 Super | 16 GB | Qwen2-VL 7B@vLLM |
+| RTX 4080 | 16 GB | Qwen2-VL 7B@vLLM |
+| RTX 4070 Ti Super | 16 GB | Qwen2-VL 7B@vLLM |
+| RTX 4070 Ti | 12 GB | Phi-3.5@vLLM, dots.ocr@vLLM |
+| RTX 4070 | 12 GB | Qwen3-VL 2B, dots.ocr@vLLM |
+| RTX 4060 Ti | 16/8 GB | Qwen2-VL 2B, Qwen3-VL 2B |
+| RTX 4060 | 8 GB | Qwen3-VL 2B@FP16, dots.ocr@vLLM |
 
 ### NVIDIA GeForce RTX 30-серия
 
 | GPU | VRAM | Лучшие модели |
 |-----|------|---------------|
-| RTX 3090 | 24 GB | Qwen3-VL 8B@FP16 |
-| RTX 3080 Ti | 12 GB | Qwen3-VL 4B@FP16 |
-| RTX 3080 | 10/12 GB | Qwen3-VL 4B@INT8 |
-| RTX 3070 Ti | 8 GB | Qwen3-VL 2B@FP16 |
-| RTX 3070 | 8 GB | Qwen3-VL 2B@FP16 |
-| RTX 3060 | 12 GB | Qwen3-VL 4B@INT8 |
+| RTX 3090 | 24 GB | Все модели@FP16 |
+| RTX 3080 Ti | 12 GB | Phi-3.5@vLLM, dots.ocr@vLLM |
+| RTX 3080 | 10/12 GB | Qwen3-VL 2B@FP16, dots.ocr@vLLM |
+| RTX 3070 Ti | 8 GB | Qwen3-VL 2B@FP16, dots.ocr@vLLM |
+| RTX 3070 | 8 GB | Qwen3-VL 2B@FP16, dots.ocr@vLLM |
+| RTX 3060 | 12 GB | Qwen2-VL 2B@FP16, dots.ocr@vLLM |
 
 ## Настройка квантизации
 
@@ -72,14 +72,14 @@
 Максимальное качество, требует больше памяти.
 
 ```yaml
-# config.yaml
-models:
-  qwen3_vl_8b:
+# config.yaml — transformers секция
+transformers:
+  qwen3_vl_2b:
     precision: "fp16"
 ```
 
 ```python
-model = ModelLoader.load_model('qwen3_vl_8b', precision='fp16')
+model = ModelLoader.load_model('qwen3_vl_2b', precision='fp16')
 ```
 
 ### INT8 (рекомендуется)
@@ -87,13 +87,13 @@ model = ModelLoader.load_model('qwen3_vl_8b', precision='fp16')
 Хороший баланс качества и памяти. Снижение VRAM на ~40%.
 
 ```yaml
-models:
-  qwen3_vl_8b:
+transformers:
+  qwen3_vl_2b:
     precision: "int8"
 ```
 
 ```python
-model = ModelLoader.load_model('qwen3_vl_8b', precision='int8')
+model = ModelLoader.load_model('qwen3_vl_2b', precision='int8')
 ```
 
 ### INT4 (максимальная экономия)
@@ -101,13 +101,13 @@ model = ModelLoader.load_model('qwen3_vl_8b', precision='int8')
 Минимальное потребление памяти. Снижение VRAM на ~66%.
 
 ```yaml
-models:
-  qwen3_vl_8b:
+transformers:
+  qwen3_vl_2b:
     precision: "int4"
 ```
 
 ```python
-model = ModelLoader.load_model('qwen3_vl_8b', precision='int4')
+model = ModelLoader.load_model('qwen3_vl_2b', precision='int4')
 ```
 
 ## Flash Attention 2
@@ -129,14 +129,14 @@ pip install flash-attn --no-build-isolation
 ### Включение
 
 ```yaml
-# config.yaml
-models:
-  qwen3_vl_8b:
+# config.yaml — transformers секция
+transformers:
+  qwen3_vl_2b:
     use_flash_attention: true
 ```
 
 ```python
-model = ModelLoader.load_model('qwen3_vl_8b', use_flash_attention=True)
+model = ModelLoader.load_model('qwen3_vl_2b', use_flash_attention=True)
 ```
 
 ## Проверка GPU
@@ -157,11 +157,11 @@ Compute Capability: 8.9
 Flash Attention: Поддерживается
 
 === Рекомендуемые модели ===
-- Qwen3-VL 8B @ FP16 (17.6 GB)
-- Qwen3-VL 4B @ FP16 (8.9 GB)
 - Qwen3-VL 2B @ FP16 (4.4 GB)
+- Qwen2-VL 2B @ FP16 (4.7 GB)
+- dots.ocr @ BF16/vLLM (4.5 GB)
 - GOT-OCR 2.0 @ FP16 (3 GB)
-- dots.ocr @ BF16 (8 GB)
+- Phi-3.5 Vision @ vLLM (8 GB)
 ```
 
 ### Программная проверка
@@ -194,7 +194,7 @@ if torch.cuda.is_available():
 ### Автоматическое распределение
 
 ```python
-model = ModelLoader.load_model('qwen3_vl_8b', device_map='auto')
+model = ModelLoader.load_model('qwen3_vl_2b', device_map='auto')
 ```
 
 ### Очистка кеша
@@ -206,7 +206,7 @@ import torch
 torch.cuda.empty_cache()
 
 # Выгрузка модели
-ModelLoader.unload_model('qwen3_vl_8b')
+ModelLoader.unload_model('qwen3_vl_2b')
 ```
 
 ### Мониторинг памяти
@@ -249,20 +249,21 @@ print(f"Зарезервировано: {reserved:.2f} GB")
 
 ### Время инференса (RTX 4090, изображение 1024x1024)
 
-| Модель | FP16 | INT8 | INT4 |
-|--------|------|------|------|
-| Qwen3-VL 2B | 0.8s | 1.0s | 1.2s |
-| Qwen3-VL 4B | 1.5s | 1.8s | 2.1s |
-| Qwen3-VL 8B | 2.5s | 3.0s | 3.5s |
-| GOT-OCR 2.0 | 0.5s | 0.6s | - |
+| Модель | Режим | FP16/BF16 |
+|--------|-------|-----------|
+| GOT-OCR 2.0 | transformers | 0.5s |
+| Qwen2-VL 2B | transformers | 0.8s |
+| Qwen3-VL 2B | transformers | 0.8s |
+| dots.ocr | vllm | 1.2s |
+| Phi-3.5 Vision | vllm | ~1.5s |
+| Qwen2-VL 7B | vllm | ~2.0s |
 
 ### Качество OCR (CER, ниже лучше)
 
-| Модель | FP16 | INT8 | INT4 |
-|--------|------|------|------|
-| Qwen3-VL 8B | 2.1% | 2.3% | 2.8% |
-| Qwen3-VL 4B | 2.5% | 2.7% | 3.2% |
-| Qwen3-VL 2B | 3.1% | 3.3% | 3.8% |
-| GOT-OCR 2.0 | 2.8% | 3.0% | - |
+| Модель | FP16 | INT8 |
+|--------|------|------|
+| Qwen3-VL 2B | 3.1% | 3.3% |
+| GOT-OCR 2.0 | 2.8% | 3.0% |
+| dots.ocr | 2.3% | — |
 
 *CER = Character Error Rate (частота ошибок на символ)*
