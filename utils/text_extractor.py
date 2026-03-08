@@ -34,16 +34,19 @@ class TextExtractor:
     
     @staticmethod
     def fix_common_errors(text: str) -> str:
-        """Fix common OCR recognition errors."""
-        replacements = {
-            'l\'': 'I',  # l apostrophe to I
-            '|': 'I',    # Pipe to I
-            '§': 'S',    # Section sign to S
-        }
+        """
+        Fix common OCR recognition errors.
         
-        # Apply replacements (context-aware logic can be added)
-        for wrong, correct in replacements.items():
-            text = text.replace(wrong, correct)
+        Only applies safe, context-aware replacements that won't
+        break markdown tables, bash pipes, or other valid uses of
+        special characters.
+        """
+        # Context-aware: replace l' → I only between word boundaries
+        text = re.sub(r"\bl'\b", "I", text)
+        
+        # Note: '|' → 'I' and '0' → 'O' replacements removed —
+        # they break markdown tables, bash pipes, and numeric data.
+        # '§' → 'S' removed — loses semantic meaning.
         
         return text
     
@@ -91,7 +94,7 @@ class TextExtractor:
     @staticmethod
     def extract_amounts(text: str) -> List[Dict[str, str]]:
         """Extract monetary amounts with currencies."""
-        pattern = r'([\$€£¥₽])\s?(\d+(?:[.,]\d+)?)'
+        pattern = r'([\$\u20ac\u00a3\u00a5\u20bd])\s?(\d+(?:[.,]\d+)?)'
         matches = re.findall(pattern, text)
         
         return [

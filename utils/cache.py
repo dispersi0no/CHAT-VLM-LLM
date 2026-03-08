@@ -1,13 +1,11 @@
 """Caching utilities for model results and processed images."""
 
 import hashlib
-import pickle
+import json
 from pathlib import Path
 from typing import Any, Optional, Callable
 from functools import wraps
 import time
-
-_CACHE_MISS = object()
 
 
 class SimpleCache:
@@ -25,39 +23,37 @@ class SimpleCache:
     
     def _get_cache_path(self, key: str) -> Path:
         """Get cache file path for a key."""
-        # Create hash of key for filename
         key_hash = hashlib.md5(key.encode()).hexdigest()
-        return self.cache_dir / f"{key_hash}.pkl"
+        return self.cache_dir / f"{key_hash}.json"
     
-    def get(self, key: str, max_age: Optional[int] = None, default: Any = None) -> Any:
+    def get(self, key: str, max_age: Optional[int] = None) -> Optional[Any]:
         """
         Get value from cache.
         
         Args:
             key: Cache key
             max_age: Maximum age in seconds (None for no expiration)
-            default: Value to return on cache miss (default: None)
             
         Returns:
-            Cached value or default if not found/expired
+            Cached value or None if not found/expired
         """
         cache_path = self._get_cache_path(key)
         
         if not cache_path.exists():
-            return default
+            return None
         
         # Check age if specified
         if max_age is not None:
             file_age = time.time() - cache_path.stat().st_mtime
             if file_age > max_age:
                 cache_path.unlink()  # Remove expired cache
-                return default
+                return None
         
         try:
-            with open(cache_path, 'rb') as f:
-                return pickle.load(f)
+            with open(cache_path, 'r', encoding='utf-8') as f:
+                return json.load(f)
         except Exception:
-            return default
+            return None
     
     def set(self, key: str, value: Any) -> None:
         """
@@ -65,24 +61,27 @@ class SimpleCache:
         
         Args:
             key: Cache key
-            value: Value to cache
+            value: Value to cache (must be JSON-serializable)
         """
         cache_path = self._get_cache_path(key)
         
         try:
-            with open(cache_path, 'wb') as f:
-                pickle.dump(value, f)
+            with open(cache_path, 'w', encoding='utf-8') as f:
+                json.dump(value, f, ensure_ascii=False)
         except Exception as e:
             print(f"Failed to cache value: {e}")
     
     def clear(self) -> None:
         """Clear all cache files."""
+        for cache_file in self.cache_dir.glob("*.json"):
+            cache_file.unlink()
+        # Also clean up legacy .pkl files
         for cache_file in self.cache_dir.glob("*.pkl"):
             cache_file.unlink()
     
     def size(self) -> int:
         """Get number of cached items."""
-        return len(list(self.cache_dir.glob("*.pkl")))
+        return len(list(self.cache_dir.glob("*.json")))
 
 
 def cached(cache: SimpleCache, max_age: Optional[int] = None):
@@ -106,8 +105,8 @@ def cached(cache: SimpleCache, max_age: Optional[int] = None):
             cache_key = "|".join(key_parts)
             
             # Try to get from cache
-            result = cache.get(cache_key, max_age, default=_CACHE_MISS)
-            if result is not _CACHE_MISS:
+            result = cache.get(cache_key, max_age)
+            if result is not None:
                 return result
             
             # Compute result and cache
