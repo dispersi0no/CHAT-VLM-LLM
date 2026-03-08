@@ -87,6 +87,21 @@ vllm:
     precision: fp16
     trust_remote_code: true
   
+  qwen2_vl_7b:
+    model_path: Qwen/Qwen2-VL-7B-Instruct
+    name: Qwen2-VL 7B (vLLM)
+    display_name: "Qwen2-VL 7B (Тяжёлая)"
+    description: "Тяжёлая VLM модель для сложных задач"
+    container_name: qwen-qwen2-vl-7b-instruct-vllm
+    compose_service: qwen2-vl-7b
+    port: 8003
+    memory_gb: 16.0
+    startup_time: 200
+    max_new_tokens: 2048
+    context_length: 4096
+    precision: fp16
+    trust_remote_code: true
+  
   qwen3_vl_2b:
     model_path: Qwen/Qwen3-VL-2B-Instruct
     name: Qwen3-VL 2B (vLLM - Рекомендуется)
