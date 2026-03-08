@@ -1,5 +1,5 @@
 # GPU-enabled image with CUDA
-FROM nvidia/cuda:12.1.0-runtime-ubuntu22.04
+FROM nvidia/cuda:12.6.0-runtime-ubuntu22.04
 
 # Set working directory
 WORKDIR /app
@@ -20,7 +20,7 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt .
 
 # Install PyTorch with CUDA support
-RUN pip install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+RUN pip install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126
 
 # Install other dependencies
 RUN pip install --no-cache-dir -r requirements.txt

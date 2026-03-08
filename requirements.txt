@@ -1,5 +1,5 @@
 # Core ML
-# torch installed via Dockerfile (with --index-url https://download.pytorch.org/whl/cu121)
+# torch installed via Dockerfile (with --index-url https://download.pytorch.org/whl/cu126)
 transformers==4.47.1
 accelerate==1.2.1
 
