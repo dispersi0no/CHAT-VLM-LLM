@@ -140,7 +140,7 @@ pytest tests/ -v
 
 ### Линтинг
 ```bash
-black . && isort --profile black .
+black . && isort .
 ```
 
 ### CI
@@ -195,6 +195,12 @@ black . && isort --profile black .
 ├── 📄 requirements.txt            # Зависимости
 └── 📄 LICENSE                     # MIT
 ```
+
+---
+
+## 🤝 Участие в разработке
+
+Приветствуем вклад в проект! Смотрите [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 

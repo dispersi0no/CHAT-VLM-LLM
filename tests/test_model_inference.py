@@ -679,11 +679,15 @@ class TestBaseModelExtra:
         """_get_device falls through to CPU when get_device_properties raises and MPS unavailable."""
         import torch
 
-        with patch.object(torch.cuda, "is_available", return_value=True), patch.object(
-            torch.cuda,
-            "get_device_properties",
-            side_effect=Exception("GPU error"),
-        ), patch.object(torch.backends.mps, "is_available", return_value=False):
+        with (
+            patch.object(torch.cuda, "is_available", return_value=True),
+            patch.object(
+                torch.cuda,
+                "get_device_properties",
+                side_effect=Exception("GPU error"),
+            ),
+            patch.object(torch.backends.mps, "is_available", return_value=False),
+        ):
 
             class _M(BaseModel):
                 def load_model(self):
@@ -699,11 +703,15 @@ class TestBaseModelExtra:
         """_get_device falls through to MPS when CUDA raises and MPS available."""
         import torch
 
-        with patch.object(torch.cuda, "is_available", return_value=True), patch.object(
-            torch.cuda,
-            "get_device_properties",
-            side_effect=Exception("GPU init fail"),
-        ), patch.object(torch.backends.mps, "is_available", return_value=True):
+        with (
+            patch.object(torch.cuda, "is_available", return_value=True),
+            patch.object(
+                torch.cuda,
+                "get_device_properties",
+                side_effect=Exception("GPU init fail"),
+            ),
+            patch.object(torch.backends.mps, "is_available", return_value=True),
+        ):
 
             class _M(BaseModel):
                 def load_model(self):
@@ -733,9 +741,11 @@ class TestBaseModelExtra:
         model = self._make_mock_model()
         model.model = MagicMock()
 
-        with patch.object(torch.cuda, "is_available", return_value=True), patch.object(
-            torch.cuda, "empty_cache"
-        ) as mock_empty, patch.object(torch.cuda, "synchronize") as mock_sync:
+        with (
+            patch.object(torch.cuda, "is_available", return_value=True),
+            patch.object(torch.cuda, "empty_cache") as mock_empty,
+            patch.object(torch.cuda, "synchronize") as mock_sync,
+        ):
             model.unload()
 
         mock_empty.assert_called_once()
@@ -749,8 +759,11 @@ class TestBaseModelExtra:
         model = self._make_mock_model()
         model.model = MagicMock()
 
-        with patch.object(torch.cuda, "is_available", return_value=True), patch.object(
-            torch.cuda, "empty_cache", side_effect=RuntimeError("CUDA boom")
+        with (
+            patch.object(torch.cuda, "is_available", return_value=True),
+            patch.object(
+                torch.cuda, "empty_cache", side_effect=RuntimeError("CUDA boom")
+            ),
         ):
             # Should not raise
             model.unload()
