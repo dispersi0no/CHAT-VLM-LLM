@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 import json
+import logging
 import re
 
 import streamlit as st
 
 from utils.constants import CATEGORY_EMOJIS
+
+logger = logging.getLogger(__name__)
 
 
 def render_message_with_json_and_html_tables(
@@ -160,6 +163,7 @@ def convert_dots_ocr_json_to_text_table(content: str) -> str:
 
     except Exception as e:
         # Если не удалось конвертировать, возвращаем исходный контент
+        logger.exception("convert_dots_ocr_json_to_text_table failed")
         return f"⚠️ **Не удалось конвертировать JSON:** {str(e)}\n\n```\n{content}\n```"
 
 
@@ -212,6 +216,9 @@ def convert_html_table_to_text(content: str) -> str:
             )
 
         except Exception:
+            logger.warning(
+                "convert_html_table_to_text: failed to convert a table, stripping HTML tags"
+            )
             # Если конвертация не удалась, просто убираем HTML теги
             clean_table = re.sub(r"<[^>]+>", "", table_html)
             result_content = result_content.replace(

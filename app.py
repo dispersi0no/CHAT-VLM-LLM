@@ -9,6 +9,9 @@ from ui.pages.home import show_home
 from ui.pages.ocr import show_ocr
 from ui.sidebar import render_sidebar
 from ui.styles import get_custom_css
+from utils.logging_config import setup_logging
+
+setup_logging()
 
 # ── Page configuration (must be first Streamlit call) ──────────────────────
 st.set_page_config(

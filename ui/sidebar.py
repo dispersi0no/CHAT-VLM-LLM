@@ -1,8 +1,11 @@
 """Sidebar UI for ChatVLMLLM Streamlit application."""
 
+import logging
 import time
 
 import streamlit as st
+
+logger = logging.getLogger(__name__)
 
 
 def render_sidebar(config: dict) -> tuple:
@@ -216,6 +219,7 @@ def _render_vllm_section() -> tuple[str, int]:
             )
 
     except Exception as e:
+        logger.exception("_render_vllm_section failed")
         st.error(f"❌ Ошибка подключения к vLLM: {e}")
         selected_model = "rednote-hilab/dots.ocr"
         model_max_tokens = 1024
@@ -421,6 +425,7 @@ def _render_project_stats(config: dict) -> None:
             st.rerun()
 
     except Exception as e:
+        logger.exception("_render_project_stats: model status check failed")
         st.error(f"Ошибка проверки моделей: {e}")
 
 
