@@ -43,5 +43,5 @@ repos:
       - id: mypy
         args: ['--ignore-missing-imports']
         additional_dependencies: []
-        files: ^(single_container_manager|vllm_streamlit_adapter|api|utils/.*|ui/components/.*|ui/message_renderer)\.py$
+        files: ^(single_container_manager|vllm_streamlit_adapter|api|utils/.+|ui/components|ui/message_renderer)\.py$
         pass_filenames: true
