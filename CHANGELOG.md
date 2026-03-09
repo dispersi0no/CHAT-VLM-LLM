@@ -11,6 +11,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fine-tuning support
 - Cloud deployment guide
 - Performance benchmarks
+- Security hardening (env validation, input sanitization)
+
+## [0.4.0] - 2026-03-09
+
+### Added
+- **CI/CD Pipeline**: Full GitHub Actions workflow — black, isort, mypy, pytest with coverage, 15% coverage gate (#76)
+- **Test Suite**: 162+ new tests across 7 PRs:
+  - Unit tests for utilities and constants (#80)
+  - Mock-based inference pipeline tests (#85)
+  - FastAPI endpoint tests with TestClient (#87)
+  - Docker container manager tests — 42 cases (#89)
+  - vLLM adapter tests — 48 cases (#90)
+  - UI utility tests (bbox, components, message_renderer) — 52 cases (#91)
+- **Strict Typing**: `py.typed` marker (PEP 561), `strict = true` mypy config, type annotations across 9 core modules (#92)
+- **Structured Logging**: Centralized `utils/logging_config.py` with `setup_logging()`, `logger.exception()` in all except blocks alongside `st.error()` (#93)
+- **Pre-commit Hooks**: Enhanced with `debug-statements`, `detect-private-key`, `check-ast`, `check-merge-conflict`, `check-json`, `check-toml`, mypy mirror (#94)
+- **Project Config**: `pyproject.toml` with black, isort, pytest, mypy sections (#86)
+
+### Changed
+- **Code Style**: Full black + isort formatting pass across entire codebase (#77)
+- **Refactoring**:
+  - Renamed `dots_ocr_final` → `dots_ocr` — removed legacy suffix (#78)
+  - Consolidated duplicated `unload()` methods into single base implementation (#81)
+  - Cleaned `__init__` + tokenizer patterns across model wrappers (#83)
+  - Split `ui/sidebar.py` (17KB) into 8 focused helper functions (#88)
+- **Logging**: `start_system.py` / `stop_system.py` — `print()` → `logger.info/error`, bare `except:` → specific exception types (#93)
+- **Pre-commit**: Bumped versions — pre-commit-hooks v5.0.0, black 24.10.0, flake8 7.1.1 (#94)
+
+### Fixed
+- **Bug**: Missing `unload()` method in Qwen3VL model wrapper — caused memory leak on model switch (#82)
+
+### Removed
+- Dead code cleanup — unused imports, unreachable branches, stale comments (#79)
+
+### Documentation
+- README rewrite — updated architecture, models, GPU requirements (#84)
+- Pre-commit hooks section added to README_DEV.md (#94)
 
 ## [0.3.1] - 2026-03-08
 
@@ -198,6 +235,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Version History Summary
 
+- **0.4.0** - Code quality engineering: CI/CD, 162+ tests, strict typing, structured logging, pre-commit hooks
 - **0.3.1** - Security fixes, CI/CD fixes, test coverage expansion
 - **0.3.0** - vLLM support, FastAPI API, project audit & cleanup
 - **0.2.0** - Production improvements (logging, caching, validation, UI enhancements)
