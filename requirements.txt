@@ -1,6 +1,6 @@
 # Core ML
 # torch installed via Dockerfile (with --index-url https://download.pytorch.org/whl/cu126)
-transformers==4.48.0
+transformers==4.47.1
 accelerate==1.2.1
 
 # VLM specific
@@ -11,13 +11,13 @@ bitsandbytes==0.45.0
 # API
 fastapi==0.115.6
 uvicorn[standard]==0.34.0
-python-multipart==0.0.22
+python-multipart==0.0.19
 
 # UI
 streamlit==1.41.1
 
 # Utils
-Pillow==12.1.1
+Pillow==11.1.0
 PyYAML==6.0.2
 requests==2.32.3
 numpy==1.26.4
