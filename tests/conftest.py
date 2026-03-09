@@ -81,3 +81,20 @@ _stub("streamlit")
 
 # qwen_vl_utils (optional dependency of models/qwen_vl.py)
 _stub("qwen_vl_utils")
+
+# Docker SDK (required by single_container_manager.py; not installed in CI)
+if "docker" not in sys.modules:
+    _docker_mock = MagicMock(name="docker")
+
+    class _NotFound(Exception):
+        pass
+
+    class _APIError(Exception):
+        pass
+
+    _docker_errors = MagicMock(name="docker.errors")
+    _docker_errors.NotFound = _NotFound
+    _docker_errors.APIError = _APIError
+    _docker_mock.errors = _docker_errors
+    sys.modules["docker"] = _docker_mock
+    sys.modules["docker.errors"] = _docker_errors
