@@ -155,6 +155,22 @@ docker build -t chatvlmllm-light -f Dockerfile.light .
 
 ## Development Workflow
 
+### Pre-commit hooks
+
+The project uses pre-commit hooks to enforce code quality before each commit:
+
+```bash
+pip install pre-commit
+pre-commit install
+```
+
+Hooks include:
+- **Formatting**: black, isort
+- **Linting**: flake8
+- **Type checking**: mypy (core modules only)
+- **Security**: detect-private-key
+- **Quality**: debug-statements (no print/breakpoint), check-ast, check-merge-conflict
+
 ### 1. Code Style
 
 We follow PEP 8 with black formatter:
