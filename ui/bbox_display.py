@@ -1,8 +1,12 @@
 """BBOX visualization display for OCR results."""
 
+import logging
+
 import streamlit as st
 
 from utils.constants import CATEGORY_EMOJIS, DEBUG_MODE
+
+logger = logging.getLogger(__name__)
 
 
 def display_bbox_visualization_improved(ocr_result):
@@ -176,4 +180,5 @@ def display_bbox_visualization_improved(ocr_result):
                     st.markdown("---")
 
     except Exception as e:
+        logger.exception("BBOX visualization failed")
         st.error(f"❌ Ошибка визуализации BBOX: {str(e)}")

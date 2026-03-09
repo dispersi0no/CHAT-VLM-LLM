@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import base64
 import io
+import logging
 import time
 from typing import Any, Dict, List, Optional
 
@@ -17,6 +18,8 @@ import streamlit as st
 from PIL import Image
 
 from single_container_manager import SingleContainerManager
+
+logger = logging.getLogger(__name__)
 
 
 class VLLMStreamlitAdapter:
@@ -99,6 +102,11 @@ class VLLMStreamlitAdapter:
                 return False
 
         except Exception as e:
+            logger.warning(
+                "check_all_connections failed for %s: %s",
+                active_config.get("display_name", active_model_key),
+                e,
+            )
             st.warning(
                 f"⚠️ {active_config['display_name']} недоступна: {str(e)[:50]}..."
             )
@@ -171,6 +179,7 @@ class VLLMStreamlitAdapter:
 
                 return self.available_models
         except Exception as e:
+            logger.exception("get_available_models failed")
             st.error(f"❌ Ошибка получения моделей: {e}")
         return []
 
@@ -307,6 +316,7 @@ class VLLMStreamlitAdapter:
                 }
 
         except Exception as e:
+            logger.exception("process_image_with_vllm failed via endpoint %s", endpoint)
             st.error(f"❌ Ошибка обработки через {endpoint}: {e}")
             return {"success": False, "error": str(e), "text": "", "processing_time": 0}
 

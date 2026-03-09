@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import subprocess
 import time
 from pathlib import Path
@@ -16,6 +17,8 @@ import docker
 import requests
 import streamlit as st
 import yaml
+
+logger = logging.getLogger(__name__)
 
 
 class SingleContainerManager:
@@ -70,6 +73,7 @@ class SingleContainerManager:
                 "health": "unknown",
             }
         except Exception as e:
+            logger.warning("get_container_status failed for %s: %s", container_name, e)
             return {
                 "exists": False,
                 "running": False,
@@ -104,6 +108,7 @@ class SingleContainerManager:
         except requests.exceptions.Timeout:
             return False, "Request timeout"
         except Exception as e:
+            logger.warning("check_api_health failed on port %s: %s", port, e)
             return False, f"API error: {str(e)}"
 
     def get_active_model(self) -> Optional[str]:
@@ -142,6 +147,7 @@ class SingleContainerManager:
                     # Контейнер уже не существует
                     stopped.append(model_key)
                 except Exception as e:
+                    logger.exception("Failed to stop container for model %s", model_key)
                     failed.append(f"{model_key}: {str(e)}")
 
         return stopped, failed
@@ -243,6 +249,7 @@ class SingleContainerManager:
             )
 
         except Exception as e:
+            logger.exception("Container start failed for %s", model_key)
             return False, f"Ошибка запуска: {str(e)}"
 
     def _build_docker_command(

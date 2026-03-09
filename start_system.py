@@ -4,12 +4,18 @@
 Единообразный запуск на стандартных портах
 """
 
+import logging
 import os
 import subprocess
 import sys
 import time
 
 import requests
+
+from utils.logging_config import setup_logging
+
+setup_logging()
+logger = logging.getLogger(__name__)
 
 
 def run_command(cmd, shell=True):
@@ -35,16 +41,15 @@ def check_port(port, timeout=5):
 
 
 def main():
-    print("🚀 Запуск системы ChatVLMLLM")
-    print("=" * 50)
+    logger.info("Запуск системы ChatVLMLLM")
 
     # 1. Проверяем и останавливаем существующие процессы
-    print("1️⃣ Очистка существующих процессов...")
+    logger.info("1. Очистка существующих процессов...")
 
     # Останавливаем Streamlit
     success, stdout, stderr = run_command("taskkill /F /IM streamlit.exe 2>nul")
     if success:
-        print("   ✅ Streamlit процессы остановлены")
+        logger.info("Streamlit процессы остановлены")
 
     # Останавливаем и удаляем ВСЕ старые контейнеры vLLM
     old_containers = [
@@ -61,17 +66,17 @@ def main():
         run_command(f"docker stop {container} 2>nul")
         run_command(f"docker rm {container} 2>nul")
 
-    print("   ✅ Старые контейнеры очищены")
+    logger.info("Старые контейнеры очищены")
 
     # 2. Запускаем dots.ocr контейнер
-    print("\n2️⃣ Запуск dots.ocr модели...")
+    logger.info("2. Запуск dots.ocr модели...")
 
     # Проверяем, не запущен ли уже правильный контейнер
     success, stdout, stderr = run_command(
         "docker ps --filter name=dots-ocr-fixed --format '{{.Names}}'"
     )
     if "dots-ocr-fixed" in stdout:
-        print("   ✅ Контейнер dots-ocr-fixed уже запущен")
+        logger.info("Контейнер dots-ocr-fixed уже запущен")
     else:
         # Останавливаем и удаляем если есть
         run_command("docker stop dots-ocr-fixed 2>nul")
@@ -117,31 +122,31 @@ def main():
 
         success, stdout, stderr = run_command(docker_cmd, shell=False)
         if success:
-            print("   ✅ Контейнер dots-ocr-fixed запущен")
+            logger.info("Контейнер dots-ocr-fixed запущен")
         else:
-            print(f"   ❌ Ошибка запуска контейнера: {stderr}")
+            logger.error("Ошибка запуска контейнера: %s", stderr)
             return False
 
     # 3. Ожидание готовности API
-    print("\n3️⃣ Ожидание готовности модели...")
+    logger.info("3. Ожидание готовности модели...")
 
     max_wait = 180  # 3 минуты (увеличено с 2 минут)
     start_time = time.time()
 
     while time.time() - start_time < max_wait:
         if check_port(8000):
-            print("   ✅ API dots.ocr готов!")
+            logger.info("API dots.ocr готов!")
             break
 
         elapsed = int(time.time() - start_time)
-        print(f"   ⏳ Загрузка модели... ({elapsed}с/{max_wait}с)")
+        logger.info("Загрузка модели... (%ss/%ss)", elapsed, max_wait)
         time.sleep(5)
     else:
-        print("   ❌ Таймаут загрузки модели")
+        logger.error("Таймаут загрузки модели")
         return False
 
     # 4. Запуск Streamlit приложения
-    print("\n4️⃣ Запуск Streamlit приложения...")
+    logger.info("4. Запуск Streamlit приложения...")
 
     # Очищаем кеши
     cache_dirs = [os.path.expanduser("~/.streamlit"), "__pycache__"]
@@ -155,12 +160,12 @@ def main():
                     shutil.rmtree(cache_dir)
                 else:
                     os.remove(cache_dir)
-                print(f"   ✅ Очищен кеш: {cache_dir}")
-            except:
-                pass
+                logger.info("Очищен кеш: %s", cache_dir)
+            except (OSError, PermissionError) as exc:
+                logger.warning("Не удалось очистить кеш %s: %s", cache_dir, exc)
 
     # Запускаем Streamlit
-    print("   🚀 Запуск Streamlit на http://localhost:8501...")
+    logger.info("Запуск Streamlit на http://localhost:8501...")
 
     try:
         # Запускаем в фоновом режиме
@@ -187,18 +192,20 @@ def main():
         try:
             response = requests.get("http://localhost:8501", timeout=5)
             if response.status_code == 200:
-                print("   ✅ Streamlit запущен успешно!")
+                logger.info("Streamlit запущен успешно!")
             else:
-                print(f"   ⚠️ Streamlit отвечает с кодом: {response.status_code}")
-        except:
-            print("   ⚠️ Streamlit запускается... (может потребоваться время)")
+                logger.warning("Streamlit отвечает с кодом: %s", response.status_code)
+        except requests.exceptions.RequestException as exc:
+            logger.warning(
+                "Streamlit запускается... (может потребоваться время): %s", exc
+            )
 
     except Exception as e:
-        print(f"   ❌ Ошибка запуска Streamlit: {e}")
+        logger.error("Ошибка запуска Streamlit: %s", e)
         return False
 
     # 5. Финальная проверка
-    print("\n5️⃣ Финальная проверка системы...")
+    logger.info("5. Финальная проверка системы...")
 
     # Проверяем GPU
     success, stdout, stderr = run_command(
@@ -207,36 +214,24 @@ def main():
     if success and stdout.strip():
         memory_used = int(stdout.strip())
         if memory_used > 5000:  # Больше 5GB
-            print(f"   ✅ GPU активен: {memory_used}MB используется")
+            logger.info("GPU активен: %sMB используется", memory_used)
         else:
-            print(f"   ⚠️ GPU память: {memory_used}MB (модель может еще загружаться)")
+            logger.warning(
+                "GPU память: %sMB (модель может еще загружаться)", memory_used
+            )
 
     # Проверяем контейнер
     success, stdout, stderr = run_command(
         "docker ps --filter name=dots-ocr-fixed --format '{{.Status}}'"
     )
     if "Up" in stdout:
-        print("   ✅ Контейнер dots-ocr-fixed работает")
+        logger.info("Контейнер dots-ocr-fixed работает")
     else:
-        print("   ❌ Проблема с контейнером")
+        logger.error("Проблема с контейнером")
 
-    print("\n" + "=" * 50)
-    print("🎉 СИСТЕМА ЗАПУЩЕНА!")
-    print()
-    print("📱 Интерфейсы:")
-    print("   • Streamlit: http://localhost:8501")
-    print("   • dots.ocr API: http://localhost:8000")
-    print()
-    print("💡 Инструкции:")
-    print("   1. Откройте http://localhost:8501")
-    print("   2. Если модель не обнаруживается - нажмите '🔄 Обновить статус моделей'")
-    print("   3. Выберите режим OCR или Чат")
-    print("   4. Загрузите изображение и начинайте работу!")
-    print()
-    print("🔧 Управление:")
-    print("   • Остановка: Ctrl+C в терминале Streamlit")
-    print("   • Логи контейнера: docker logs dots-ocr-fixed")
-    print("   • Перезапуск: python start_system.py")
+    logger.info("СИСТЕМА ЗАПУЩЕНА!")
+    logger.info("Streamlit: http://localhost:8501")
+    logger.info("dots.ocr API: http://localhost:8000")
 
     return True
 
@@ -244,8 +239,8 @@ def main():
 if __name__ == "__main__":
     success = main()
     if not success:
-        print("\n❌ Ошибка запуска системы")
+        logger.error("Ошибка запуска системы")
         sys.exit(1)
     else:
-        print("\n✅ Система готова к работе!")
+        logger.info("Система готова к работе!")
         sys.exit(0)
