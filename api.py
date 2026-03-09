@@ -34,6 +34,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from PIL import Image
 from pydantic import BaseModel, Field
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import Response
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -225,29 +227,55 @@ app.add_middleware(
     allow_origins=security_config.CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["GET", "POST", "DELETE"],
-    allow_headers=["*"],
+    allow_headers=["Content-Type", "Authorization", "X-Requested-With", "Accept"],
     expose_headers=["X-RateLimit-Remaining"],
 )
+
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next: Any) -> Response:
+        response = await call_next(request)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response.headers["Permissions-Policy"] = (
+            "camera=(), microphone=(), geolocation=()"
+        )
+        return response
+
+
+app.add_middleware(SecurityHeadersMiddleware)
 
 
 # Кеш моделей
 model_cache = {}
 
+ALLOWED_MODELS: set[str] = {
+    "got_ocr",
+    "qwen_vl_2b",
+    "qwen3_vl_2b",
+    "dots_ocr",
+}
+
 
 def get_model(model_name: str) -> Any:
     """Загрузка и кеширование модели."""
+    if model_name not in ALLOWED_MODELS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Неизвестная модель: {model_name}. Доступные: {', '.join(sorted(ALLOWED_MODELS))}",
+        )
     if model_name not in model_cache:
         try:
             from models import ModelLoader
 
-            logger.info(f"Загрузка модели: {model_name}")
+            logger.info("Загрузка модели: %s", model_name)
             model_cache[model_name] = ModelLoader.load_model(model_name)
-            logger.info(f"Модель загружена успешно: {model_name}")
+            logger.info("Модель загружена успешно: %s", model_name)
         except Exception as e:
-            logger.error(f"Ошибка загрузки модели {model_name}: {e}")
-            raise HTTPException(
-                status_code=500, detail=f"Ошибка загрузки модели: {str(e)}"
-            )
+            logger.error("Ошибка загрузки модели %s: %s", model_name, e)
+            raise HTTPException(status_code=500, detail="Внутренняя ошибка обработки")
     return model_cache[model_name]
 
 
@@ -282,7 +310,7 @@ async def health_check():
                 torch.cuda.get_device_properties(0).total_memory / 1e9, 2
             )
             vram_used = round(torch.cuda.memory_allocated(0) / 1e9, 2)
-    except:
+    except Exception:
         gpu_available = False
         gpu_name = None
         vram_total = None
@@ -303,10 +331,8 @@ async def health_check():
 @app.get("/models")
 async def list_models():
     """Список доступных моделей."""
-    from models import ModelLoader
-
     return {
-        "available": ModelLoader.get_available_models(),
+        "available": sorted(ALLOWED_MODELS),
         "loaded": list(model_cache.keys()),
     }
 
@@ -368,8 +394,8 @@ async def extract_text(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Ошибка OCR: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception("OCR processing failed")
+        raise HTTPException(status_code=500, detail="Внутренняя ошибка обработки")
 
 
 @app.post("/chat", dependencies=[Depends(rate_limit_check)])
@@ -402,14 +428,20 @@ async def chat_with_image(
         if image.mode != "RGB":
             image = image.convert("RGB")
 
-        prompt = prompt.strip()[:2000]
+        raw_prompt = prompt.strip()
+        if len(raw_prompt) > 2000:
+            logger.warning("Prompt truncated from %d to 2000 chars", len(raw_prompt))
+        clean_prompt = raw_prompt[:2000]
 
         model_instance = get_model(model)
         start_time = time.time()
 
         # Единый dispatch через BaseModel.run()
         response = model_instance.run(
-            image, prompt=prompt, temperature=temperature, max_new_tokens=max_tokens
+            image,
+            prompt=clean_prompt,
+            temperature=temperature,
+            max_new_tokens=max_tokens,
         )
 
         processing_time = time.time() - start_time
@@ -422,7 +454,7 @@ async def chat_with_image(
                 "response": response,
                 "model": model,
                 "processing_time": round(processing_time, 3),
-                "prompt": prompt,
+                "prompt": clean_prompt,
             },
             headers={"X-RateLimit-Remaining": str(remaining)},
         )
@@ -430,8 +462,8 @@ async def chat_with_image(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Ошибка чата: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception("Chat processing failed")
+        raise HTTPException(status_code=500, detail="Внутренняя ошибка обработки")
 
 
 @app.post("/batch/ocr", dependencies=[Depends(rate_limit_check)])
@@ -489,9 +521,13 @@ async def batch_ocr(
                 {"filename": file.filename, "error": e.detail, "status": "error"}
             )
         except Exception as e:
-            logger.error(f"Ошибка пакетной обработки для {file.filename}: {e}")
+            logger.exception("Batch OCR processing failed for %s", file.filename)
             results.append(
-                {"filename": file.filename, "error": str(e), "status": "error"}
+                {
+                    "filename": file.filename,
+                    "error": "Внутренняя ошибка обработки",
+                    "status": "error",
+                }
             )
 
     successful = sum(1 for r in results if r["status"] == "success")
@@ -525,13 +561,14 @@ async def unload_model(model_name: str):
 
                 if torch.cuda.is_available():
                     torch.cuda.empty_cache()
-            except:
+            except Exception:
                 pass
 
-            logger.info(f"Модель выгружена: {model_name}")
+            logger.info("Модель выгружена: %s", model_name)
             return {"status": "success", "message": f"Модель {model_name} выгружена"}
         except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
+            logger.exception("Failed to unload model %s", model_name)
+            raise HTTPException(status_code=500, detail="Внутренняя ошибка обработки")
     else:
         raise HTTPException(status_code=404, detail=f"Модель {model_name} не загружена")
 
@@ -553,7 +590,7 @@ async def http_exception_handler(request: Request, exc: HTTPException) -> JSONRe
 @app.exception_handler(Exception)
 async def general_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     """Обработчик общих исключений."""
-    logger.error(f"Необработанная ошибка: {exc}")
+    logger.error("Необработанная ошибка: %s", exc)
     return JSONResponse(
         status_code=500,
         content={"detail": "Внутренняя ошибка сервера", "status_code": 500},

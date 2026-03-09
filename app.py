@@ -13,6 +13,10 @@ from utils.logging_config import setup_logging
 
 setup_logging()
 
+from utils.env_validator import validate_environment
+
+validate_environment()
+
 # ── Page configuration (must be first Streamlit call) ──────────────────────
 st.set_page_config(
     page_title="ChatVLMLLM - Распознавание документов и чат с VLM",
