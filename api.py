@@ -11,6 +11,8 @@ REST API для Vision-Language Models OCR и чата.
 Документация: http://localhost:8001/docs
 """
 
+from __future__ import annotations
+
 import io
 import logging
 import os
@@ -192,7 +194,7 @@ def validate_file(file: UploadFile, content: bytes) -> None:
         )
 
 
-async def rate_limit_check(request: Request):
+async def rate_limit_check(request: Request) -> None:
     """Зависимость для проверки rate limit."""
     client_ip = request.client.host if request.client else "unknown"
 
@@ -232,7 +234,7 @@ app.add_middleware(
 model_cache = {}
 
 
-def get_model(model_name: str):
+def get_model(model_name: str) -> Any:
     """Загрузка и кеширование модели."""
     if model_name not in model_cache:
         try:
@@ -540,7 +542,7 @@ async def unload_model(model_name: str):
 
 
 @app.exception_handler(HTTPException)
-async def http_exception_handler(request: Request, exc: HTTPException):
+async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
     """Обработчик HTTP исключений."""
     return JSONResponse(
         status_code=exc.status_code,
@@ -549,7 +551,7 @@ async def http_exception_handler(request: Request, exc: HTTPException):
 
 
 @app.exception_handler(Exception)
-async def general_exception_handler(request: Request, exc: Exception):
+async def general_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     """Обработчик общих исключений."""
     logger.error(f"Необработанная ошибка: {exc}")
     return JSONResponse(

@@ -22,21 +22,46 @@ addopts = "-v --tb=short"
 
 [tool.mypy]
 python_version = "3.10"
+strict = true
 warn_return_any = true
 warn_unused_configs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+no_implicit_reexport = true
 ignore_missing_imports = true
-check_untyped_defs = false
-disallow_untyped_defs = false
 exclude = "(?x)(tests/|notebooks/|scripts/|experimental/)"
 
+# Strict for core modules
 [[tool.mypy.overrides]]
-module = "streamlit.*"
-ignore_errors = true
+module = [
+    "single_container_manager",
+    "vllm_streamlit_adapter",
+    "api",
+    "utils.*",
+    "ui.components",
+    "ui.message_renderer",
+]
+disallow_untyped_defs = true
+check_untyped_defs = true
+disallow_any_generics = true
 
+# Relaxed for third-party heavy modules
 [[tool.mypy.overrides]]
-module = "torch.*"
+module = [
+    "streamlit.*",
+    "torch.*",
+    "transformers.*",
+    "docker.*",
+    "PIL.*",
+    "vllm.*",
+    "fastapi.*",
+    "uvicorn.*",
+]
 ignore_errors = true
+ignore_missing_imports = true
 
+# Relaxed for model wrappers (heavy torch/transformers usage)
 [[tool.mypy.overrides]]
-module = "transformers.*"
-ignore_errors = true
+module = "models.*"
+disallow_untyped_defs = false
+check_untyped_defs = true

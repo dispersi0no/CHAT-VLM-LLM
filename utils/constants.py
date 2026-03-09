@@ -1,6 +1,10 @@
 """Shared constants for ChatVLMLLM."""
 
-CATEGORY_EMOJIS = {
+from __future__ import annotations
+
+from typing import Dict
+
+CATEGORY_EMOJIS: Dict[str, str] = {
     "Picture": "🖼️",
     "Section-header": "📋",
     "Text": "📝",
@@ -19,4 +23,4 @@ CATEGORY_EMOJIS = {
     "QR-code": "📱",
 }
 
-DEBUG_MODE = False  # Set to True to show debug expanders
+DEBUG_MODE: bool = False  # Set to True to show debug expanders
