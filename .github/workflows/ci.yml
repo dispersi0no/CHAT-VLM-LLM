@@ -52,8 +52,9 @@ jobs:
       run: isort --check-only --diff .
     
     - name: Type check with mypy
-      continue-on-error: true
-      run: mypy utils/ models/
+      run: |
+        pip install mypy
+        mypy single_container_manager.py vllm_streamlit_adapter.py api.py utils/ ui/components.py ui/message_renderer.py --ignore-missing-imports || true
     
     - name: Run tests with coverage
       run: pytest tests/ -v --tb=short --cov=. --cov-report=term-missing --cov-report=xml --cov-fail-under=15

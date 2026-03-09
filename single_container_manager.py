@@ -4,11 +4,13 @@
 Строгий принцип: только ОДИН активный контейнер одновременно
 """
 
+from __future__ import annotations
+
 import json
 import subprocess
 import time
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import docker
 import requests
@@ -17,17 +19,17 @@ import yaml
 
 
 class SingleContainerManager:
-    def __init__(self):
-        self.client = docker.from_env()
+    def __init__(self) -> None:
+        self.client: Any = docker.from_env()
 
         # Конфигурация доступных моделей из config.yaml → vllm:
-        self.models_config = self._load_vllm_config()
+        self.models_config: Dict[str, Any] = self._load_vllm_config()
 
-        self.compose_file = "docker-compose-vllm.yml"
-        self.current_active_model = None
+        self.compose_file: str = "docker-compose-vllm.yml"
+        self.current_active_model: Optional[str] = None
 
     @staticmethod
-    def _load_vllm_config() -> Dict:
+    def _load_vllm_config() -> Dict[str, Any]:
         """Загрузка конфигурации vLLM моделей из config.yaml."""
         config_path = Path("config.yaml")
         try:
@@ -42,7 +44,7 @@ class SingleContainerManager:
             raise ValueError(f"Failed to parse {config_path}: {e}")
         return config.get("vllm", {})
 
-    def get_container_status(self, container_name: str) -> Dict:
+    def get_container_status(self, container_name: str) -> Dict[str, Any]:
         """Получение детального статуса контейнера"""
         try:
             container = self.client.containers.get(container_name)
@@ -243,7 +245,9 @@ class SingleContainerManager:
         except Exception as e:
             return False, f"Ошибка запуска: {str(e)}"
 
-    def _build_docker_command(self, model_key: str, config: Dict) -> List[str]:
+    def _build_docker_command(
+        self, model_key: str, config: Dict[str, Any]
+    ) -> List[str]:
         """Построение команды Docker для запуска контейнера"""
 
         # Базовая команда
@@ -305,7 +309,7 @@ class SingleContainerManager:
 
         return cmd
 
-    def get_system_status(self) -> Dict:
+    def get_system_status(self) -> Dict[str, Any]:
         """Получение полного статуса системы"""
         active_model = self.get_active_model()
 
@@ -430,7 +434,7 @@ class SingleContainerManager:
 
         return selected_model_key
 
-    def create_status_dashboard(self):
+    def create_status_dashboard(self) -> None:
         """Дашборд статуса всех моделей"""
 
         st.subheader("📊 Статус всех моделей")
@@ -499,7 +503,7 @@ class SingleContainerManager:
                             st.rerun()
 
 
-def create_single_container_ui():
+def create_single_container_ui() -> None:
     """Создание полного UI для управления одиночными контейнерами"""
 
     # Инициализация менеджера

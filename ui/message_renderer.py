@@ -1,5 +1,7 @@
 """Message rendering functions for the Streamlit chat interface."""
 
+from __future__ import annotations
+
 import json
 import re
 
@@ -8,7 +10,9 @@ import streamlit as st
 from utils.constants import CATEGORY_EMOJIS
 
 
-def render_message_with_json_and_html_tables(content: str, role: str = "assistant"):
+def render_message_with_json_and_html_tables(
+    content: str, role: str = "assistant"
+) -> None:
     """
     ОБРАБОТКА JSON И HTML ТАБЛИЦ - ТЕКСТОВАЯ ВЕРСИЯ
     Конвертирует JSON ответы dots.ocr в текстовые таблицы (БЕЗ HTML)

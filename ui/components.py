@@ -1,14 +1,16 @@
 """Reusable UI components for Streamlit application."""
 
+from __future__ import annotations
+
 import html
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
 import streamlit as st
 
 
 def render_metric_card(
-    title: str, value: str, delta: str = None, icon: str = "📊"
+    title: str, value: str, delta: Optional[str] = None, icon: str = "📊"
 ) -> None:
     """
     Render a metric card with custom styling.
@@ -95,7 +97,7 @@ def render_feature_list(features: List[str], title: str = "Features") -> None:
 
 
 def render_code_example(
-    code: str, language: str = "python", caption: str = None
+    code: str, language: str = "python", caption: Optional[str] = None
 ) -> None:
     """
     Render a code example with optional caption.
@@ -142,7 +144,7 @@ def render_alert(message: str, alert_type: str = "info") -> None:
 
 
 def render_image_preview(
-    image, caption: str = "Preview", max_width: int = None
+    image: Any, caption: str = "Preview", max_width: Optional[int] = None
 ) -> None:
     """
     Render an image preview with caption.

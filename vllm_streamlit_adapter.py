@@ -5,6 +5,8 @@
 ПРИНЦИП: Только один активный контейнер одновременно
 """
 
+from __future__ import annotations
+
 import base64
 import io
 import time
@@ -18,15 +20,15 @@ from single_container_manager import SingleContainerManager
 
 
 class VLLMStreamlitAdapter:
-    def __init__(self, base_url: str = "http://localhost:8000"):
-        self.base_url = base_url
-        self.available_models = []
+    def __init__(self, base_url: str = "http://localhost:8000") -> None:
+        self.base_url: str = base_url
+        self.available_models: List[str] = []
 
         # Инициализация менеджера одиночных контейнеров
-        self.container_manager = SingleContainerManager()
+        self.container_manager: SingleContainerManager = SingleContainerManager()
 
         # Маппинг моделей на порты для множественных контейнеров
-        self.model_endpoints = {
+        self.model_endpoints: Dict[str, str] = {
             "rednote-hilab/dots.ocr": "http://localhost:8000",
             "Qwen/Qwen2-VL-2B-Instruct": "http://localhost:8001",
             "Qwen/Qwen3-VL-2B-Instruct": "http://localhost:8004",
@@ -35,7 +37,7 @@ class VLLMStreamlitAdapter:
         }
 
         # Приоритеты моделей для отображения
-        self.model_priorities = {
+        self.model_priorities: Dict[str, int] = {
             "rednote-hilab/dots.ocr": 1,
             "Qwen/Qwen3-VL-2B-Instruct": 2,
             "Qwen/Qwen2-VL-2B-Instruct": 3,
@@ -151,7 +153,7 @@ class VLLMStreamlitAdapter:
         """Проверка подключения к vLLM серверу (legacy метод)"""
         return self.check_all_connections()
 
-    def get_available_models(self) -> list:
+    def get_available_models(self) -> List[str]:
         """Получение списка доступных моделей"""
         try:
             response = requests.get(f"{self.base_url}/v1/models", timeout=5)
@@ -323,7 +325,7 @@ class VLLMStreamlitAdapter:
         }
 
 
-def create_vllm_interface():
+def create_vllm_interface() -> None:
     """Создание интерфейса для работы с vLLM"""
     st.header("🚀 vLLM Режим")
 
