@@ -19,10 +19,16 @@ RUN apt-get update && apt-get install -y \
 # Copy requirements first for better caching
 COPY requirements.txt .
 
+# Install build dependencies needed by flash-attn
+RUN pip install --no-cache-dir packaging ninja
+
 # Install PyTorch with CUDA support
 RUN pip install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126
 
-# Install other dependencies
+# Install flash-attn separately with no-build-isolation to use already-installed torch
+RUN pip install --no-cache-dir flash-attn==2.7.3 --no-build-isolation
+
+# Install remaining dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application files
