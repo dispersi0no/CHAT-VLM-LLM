@@ -17,10 +17,13 @@ import io
 import logging
 import os
 import time
+import uuid
 from collections import defaultdict
+from enum import Enum
 from typing import Any, Dict, List, Optional
 
 from fastapi import (
+    BackgroundTasks,
     Depends,
     FastAPI,
     File,
@@ -248,6 +251,22 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 app.add_middleware(SecurityHeadersMiddleware)
 
 
+# =============================================================================
+# Async task queue
+# =============================================================================
+
+
+class TaskStatus(str, Enum):
+    QUEUED = "queued"
+    PROCESSING = "processing"
+    DONE = "done"
+    ERROR = "error"
+
+
+# {task_id: {"status": TaskStatus, "result": str|None, "error": str|None, "model": str, "processing_time": float|None}}
+task_store: Dict[str, Dict[str, Any]] = {}
+
+
 # Кеш моделей
 model_cache = {}
 
@@ -277,6 +296,38 @@ def get_model(model_name: str) -> Any:
             logger.error("Ошибка загрузки модели %s: %s", model_name, e)
             raise HTTPException(status_code=500, detail="Внутренняя ошибка обработки")
     return model_cache[model_name]
+
+
+def _run_ocr_task(
+    task_id: str, image_bytes: bytes, model_name: str, language: Optional[str]
+) -> None:
+    """Background worker: run OCR and update task_store."""
+    if task_id not in task_store:
+        return
+    task_store[task_id]["status"] = TaskStatus.PROCESSING
+    try:
+        image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+        model_instance = get_model(model_name)
+        start = time.time()
+        if language:
+            prompt = f"Extract all text from this document. Language hint: {language}"
+        else:
+            prompt = "Extract all text from this document."
+        text = model_instance.run(image, prompt=prompt)
+        if task_id in task_store:
+            task_store[task_id].update(
+                {
+                    "status": TaskStatus.DONE,
+                    "result": text,
+                    "processing_time": round(time.time() - start, 3),
+                }
+            )
+    except Exception:
+        logger.exception("Async OCR task %s failed", task_id)
+        if task_id in task_store:
+            task_store[task_id].update(
+                {"status": TaskStatus.ERROR, "error": "Internal processing error"}
+            )
 
 
 # =============================================================================
@@ -396,6 +447,87 @@ async def extract_text(
     except Exception as e:
         logger.exception("OCR processing failed")
         raise HTTPException(status_code=500, detail="Внутренняя ошибка обработки")
+
+
+@app.post("/ocr/async", dependencies=[Depends(rate_limit_check)], status_code=202)
+async def submit_ocr_async(
+    request: Request,
+    background_tasks: BackgroundTasks,
+    file: UploadFile = File(...),
+    model: str = "qwen3_vl_2b",
+    language: Optional[str] = None,
+):
+    """
+    Submit an OCR job asynchronously.
+
+    Returns 202 immediately with a task_id to poll for results.
+    """
+    image_data = await file.read()
+    validate_file(file, image_data)
+
+    if model not in ALLOWED_MODELS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Неизвестная модель: {model}. Доступные: {', '.join(sorted(ALLOWED_MODELS))}",
+        )
+
+    task_id = str(uuid.uuid4())
+    task_store[task_id] = {
+        "status": TaskStatus.QUEUED,
+        "result": None,
+        "error": None,
+        "model": model,
+        "processing_time": None,
+    }
+    background_tasks.add_task(_run_ocr_task, task_id, image_data, model, language)
+
+    return JSONResponse(
+        status_code=202,
+        content={
+            "task_id": task_id,
+            "status": TaskStatus.QUEUED,
+            "poll_url": f"/ocr/status/{task_id}",
+        },
+    )
+
+
+@app.get("/ocr/status/{task_id}")
+async def get_ocr_status(task_id: str):
+    """Poll the status/result of an async OCR job."""
+    if task_id not in task_store:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    task = task_store[task_id]
+    status = task["status"]
+
+    if status in (TaskStatus.QUEUED, TaskStatus.PROCESSING):
+        return {"task_id": task_id, "status": status}
+
+    if status == TaskStatus.DONE:
+        return {
+            "task_id": task_id,
+            "status": status,
+            "text": task["result"],
+            "model": task["model"],
+            "processing_time": task["processing_time"],
+        }
+
+    # ERROR
+    return {
+        "task_id": task_id,
+        "status": status,
+        "detail": task.get("error", "Internal processing error"),
+    }
+
+
+@app.delete("/ocr/tasks/{task_id}")
+async def delete_ocr_task(task_id: str):
+    """Cancel/cleanup an async OCR task."""
+    if task_id not in task_store:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    del task_store[task_id]
+    return {"status": "deleted"}
 
 
 @app.post("/chat", dependencies=[Depends(rate_limit_check)])
