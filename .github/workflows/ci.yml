@@ -76,5 +76,6 @@ jobs:
     - name: Build Docker image
       run: docker build -t chatvlmllm:latest .
     
-    - name: Test Docker image
-      run: docker run --rm chatvlmllm:latest python -c "from models import ModelLoader; print('OK')"
+- name: Test Docker image
+  run: docker run --rm --user root chatvlmllm:latest python -c "from models import ModelLoader; print('OK')"
+
