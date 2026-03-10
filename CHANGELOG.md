@@ -13,6 +13,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Performance benchmarks
 - Security hardening (env validation, input sanitization)
 
+## [0.5.1] - 2026-03-10
+
+### Fix
+- Fix Docker build: switch base image to `nvidia/cuda:12.6.0-devel-ubuntu22.04`, install flash-attn with `--find-links` pre-built wheel and soft-fail fallback so Docker build never blocks on missing nvcc (#99, #101)
+- Fix `http_exception_handler` not forwarding `exc.headers` to `JSONResponse`, causing `X-RateLimit-Remaining` header to be silently dropped on 429 responses (#102)
+
+### CI
+- Raise pytest coverage gate from 15% to 40%; add `[tool.coverage.run]` omit list and `[tool.coverage.report]` exclude_lines to `pyproject.toml` (#98)
+
+### Tests
+- Add `tests/test_rate_limiter.py` with 12 tests: 8 unit tests for `RateLimiter` (is_allowed, get_remaining, IP isolation, timestamp expiry, cleanup) and 4 integration tests for 429 responses and `X-RateLimit-Remaining` header (#102)
+
 ## [0.5.0] - 2026-03-10
 
 ### Security
@@ -254,6 +266,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Version History Summary
 
+- **0.5.1** - Docker base image fix, flash-attn soft-fail, rate-limit header fix, coverage gate & rate-limiter tests
 - **0.5.0** - Security and quality sprint: security headers, CORS tightening, model allowlist, error masking, env validation, security tests, coverage gate increase, Docker fix
 - **0.4.0** - Code quality engineering: CI/CD, 162+ tests, strict typing, structured logging, pre-commit hooks
 - **0.3.1** - Security fixes, CI/CD fixes, test coverage expansion
