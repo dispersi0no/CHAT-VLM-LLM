@@ -22,13 +22,10 @@ COPY requirements.txt .
 # Install PyTorch with CUDA support
 RUN pip install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126
 
-# Install build tools and attempt flash-attn; soft-fail if nvcc is unavailable
-RUN pip install --no-cache-dir packaging ninja \
- && pip install --no-cache-dir flash-attn==2.7.3 \
-    --find-links https://github.com/Dao-AILab/flash-attention/releases/expanded_assets/v2.7.3 \
-    --no-build-isolation 2>&1 || echo 'flash-attn not available in this environment, skipping'
-
 # Install remaining dependencies
+# Note: flash-attn requires nvcc and GPU at compile time.
+# Install it manually on the target GPU server after deployment:
+#   pip install flash-attn==2.7.3 --no-build-isolation
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application files
