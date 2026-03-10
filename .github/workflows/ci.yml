@@ -57,7 +57,7 @@ jobs:
         mypy single_container_manager.py vllm_streamlit_adapter.py api.py utils/ ui/components.py ui/message_renderer.py --ignore-missing-imports || true
     
     - name: Run tests with coverage
-      run: pytest tests/ -v --tb=short --cov=. --cov-report=term-missing --cov-report=xml --cov-fail-under=15
+      run: pytest tests/ -v --tb=short --cov=. --cov-report=term-missing --cov-report=xml --cov-fail-under=40
     
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
