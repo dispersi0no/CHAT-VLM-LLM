@@ -13,6 +13,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Performance benchmarks
 - Security hardening (env validation, input sanitization)
 
+## [0.5.0] - 2026-03-10
+
+### Security
+- Add security headers middleware (X-Content-Type-Options, X-Frame-Options, X-XSS-Protection, Referrer-Policy, Permissions-Policy) to all API responses (#96)
+- Tighten CORS policy: restrict allowed origins, methods, and headers (#96)
+- Add model allowlist enforcement: unknown model names return 400 instead of 500 (#96)
+- Mask internal error details: tracebacks and raw exception messages never reach clients (#96)
+- Add environment variable validation on startup via `EnvValidator` (#96)
+
+### Tests
+- Add `tests/test_api_security.py` with 12 TestClient-based security tests covering headers, allowlist, error masking, file validation, batch limits, and health endpoint (#97)
+
+### CI
+- Raise pytest coverage gate from 15% to 40% (#98)
+- Add `[tool.coverage.run]` omit list and `[tool.coverage.report]` exclude_lines to `pyproject.toml` (#98)
+
+### Fix
+- Fix Docker build failure: `flash-attn==2.7.3` could not find `packaging` during source compilation; add `packaging` and `ninja` as build deps, install flash-attn with `--no-build-isolation` (#99)
+
 ## [0.4.0] - 2026-03-09
 
 ### Added
@@ -235,6 +254,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Version History Summary
 
+- **0.5.0** - Security and quality sprint: security headers, CORS tightening, model allowlist, error masking, env validation, security tests, coverage gate increase, Docker fix
 - **0.4.0** - Code quality engineering: CI/CD, 162+ tests, strict typing, structured logging, pre-commit hooks
 - **0.3.1** - Security fixes, CI/CD fixes, test coverage expansion
 - **0.3.0** - vLLM support, FastAPI API, project audit & cleanup
