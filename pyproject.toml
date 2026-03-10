@@ -20,6 +20,26 @@ python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = "-v --tb=short"
 
+[tool.coverage.run]
+omit = [
+    "tests/*",
+    "scripts/*",
+    "notebooks/*",
+    "experimental/*",
+    "*/__init__.py",
+    "conftest.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
+    "raise NotImplementedError",
+    "\\.\\.\\.",
+    "pass",
+    "if TYPE_CHECKING:",
+]
+
 [tool.mypy]
 python_version = "3.10"
 strict = true
