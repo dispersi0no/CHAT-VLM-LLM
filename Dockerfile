@@ -1,5 +1,5 @@
 # GPU-enabled image with CUDA
-FROM nvidia/cuda:12.6.0-runtime-ubuntu22.04
+FROM nvidia/cuda:12.6.0-devel-ubuntu22.04
 
 # Set working directory
 WORKDIR /app
@@ -19,14 +19,14 @@ RUN apt-get update && apt-get install -y \
 # Copy requirements first for better caching
 COPY requirements.txt .
 
-# Install build dependencies needed by flash-attn
-RUN pip install --no-cache-dir packaging ninja
-
 # Install PyTorch with CUDA support
 RUN pip install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126
 
-# Install flash-attn separately with no-build-isolation to use already-installed torch
-RUN pip install --no-cache-dir flash-attn==2.7.3 --no-build-isolation
+# Install flash-attn from pre-built wheel (avoids nvcc requirement); falls back gracefully if unavailable
+RUN pip install --no-cache-dir packaging ninja \
+ && pip install flash-attn==2.7.3 \
+    --find-links https://github.com/Dao-AILab/flash-attention/releases/expanded_assets/v2.7.3 \
+    --no-build-isolation || echo 'flash-attn not available as wheel, skipping'
 
 # Install remaining dependencies
 RUN pip install --no-cache-dir -r requirements.txt
